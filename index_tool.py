@@ -2,15 +2,12 @@ import json
 from pathlib import Path
 
 import pandas as pd
-import csv
 
-from PySide6.QtCore import Qt, QMimeData, QTimer
-from PySide6.QtGui import QDrag, QAction
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QFileDialog, QTableWidgetItem, QTableWidget, \
-    QVBoxLayout, QLabel, QHBoxLayout, QHeaderView, QSpacerItem, QSizePolicy, QFormLayout, QLineEdit, QComboBox, \
-    QGroupBox, QMenu, QMessageBox, QDialog
+from PySide6.QtCore import QTimer
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QFileDialog, QTableWidgetItem
 
 from modules.index_table import IndexTableContainer
+from modules.notification import Toast
 from ui.widget import Ui_Form
 import qdarktheme
 import sys
@@ -51,6 +48,10 @@ class IndexDefinitionConverter(QWidget, Ui_Form):
             index_header.restore_orig_header)
         self.export_pushButton.clicked.connect(self.export)
         self.unhide_pushButton.clicked.connect(self.index_table_container.tablewidget.show_all_columns)
+
+    def show_notification(self, message):
+        toast = Toast(self, message)
+        toast.show_toast()
 
     def toggle_help(self):
         if self.help_pushButton.isChecked():
@@ -104,9 +105,6 @@ class IndexDefinitionConverter(QWidget, Ui_Form):
             for j in range(df.shape[1]):
                 self.tablewidget.setItem(i, j, QTableWidgetItem(str(df.iat[i, j])))
 
-    def convert(self):
-        pass
-
     def open_file_dialog(self):
         file_dialog = QFileDialog(self)
         file_dialog.setFileMode(QFileDialog.ExistingFiles)
@@ -133,17 +131,9 @@ class IndexDefinitionConverter(QWidget, Ui_Form):
             self.export_from_csv()
 
     def export_from_csv(self):
-        if not self.validate_columns():
-            self.flash_widget_red(self.export_pushButton)
-            return
 
-        if "fixed" in self.index_table_container.resources_settings.widgets['layout'].currentText():
-            self.make_fixed_json()
+        self.show_notification("this is a test this is a test this is a test")
 
-        if "standard" in self.index_table_container.resources_settings.widgets['layout'].currentText():
-            df = self.get_columns_as_dataframe(self.index_table_container.tablewidget, self.standard_layout_labels)
-
-            print(df)
 
     @staticmethod
     def flash_widget_red(widget, duration=100):

@@ -82,6 +82,7 @@ class IndexTableContainer(QWidget):
         text = self.resources_settings.widgets['layout'].currentText()
         self.draggable_labels_container.show_labels(text)
 
+
 class DroppableHeader(QHeaderView):
     def __init__(self, orientation, parent=None):
         super().__init__(orientation, parent)
