@@ -10,6 +10,7 @@ from modules.index_table import IndexTableContainer
 from modules.notification import Toast
 from ui.widget import Ui_Form
 import qdarktheme
+import qtawesome as qta
 import sys
 
 
@@ -49,8 +50,8 @@ class IndexDefinitionConverter(QWidget, Ui_Form):
         self.export_pushButton.clicked.connect(self.export)
         self.unhide_pushButton.clicked.connect(self.index_table_container.tablewidget.show_all_columns)
 
-    def show_notification(self, message):
-        toast = Toast(self, message)
+    def show_notification(self, message, warn=False):
+        toast = Toast(self, message, warn=warn)
         toast.show_toast()
 
     def toggle_help(self):
@@ -76,21 +77,21 @@ class IndexDefinitionConverter(QWidget, Ui_Form):
         self.index_table_container.user_settings.set_filepath(file)
         self.load_csv(file)
 
-    def make_fixed_json(self):
-        df = self.get_columns_as_dataframe(self.index_table_container.tablewidget, self.fixed_layout_labels)
-        fixed_indices = df.to_dict(orient='records')
-        user_info = self.index_table_container.user_settings.settings()
-        resource = self.index_table_container.resources_settings.settings()
-        index_kit = self.index_table_container.index_kit_settings.settings()
-
-        data = {
-            'user_info': user_info,
-            'resource': resource,
-            'index_kit': index_kit,
-            'indices_dual_fixed': fixed_indices
-        }
-
-        print(json.dumps(data, indent=4))
+    # def make_fixed_json(self):
+    #     df = self.get_columns_as_dataframe(self.index_table_container.tablewidget, self.fixed_layout_labels)
+    #     fixed_indices = df.to_dict(orient='records')
+    #     user_info = self.index_table_container.user_settings.settings()
+    #     resource = self.index_table_container.resources_settings.settings()
+    #     index_kit = self.index_table_container.index_kit_settings.settings()
+    #
+    #     data = {
+    #         'user_info': user_info,
+    #         'resource': resource,
+    #         'index_kit': index_kit,
+    #         'indices_dual_fixed': fixed_indices
+    #     }
+    #
+    #     print(json.dumps(data, indent=4))
 
         # data = json.dumps(data)
         # return data
@@ -128,47 +129,38 @@ class IndexDefinitionConverter(QWidget, Ui_Form):
 
     def export(self):
         if self.csv_radioButton.isChecked():
-            self.export_from_csv()
+            all_data = self.data()
 
-    def export_from_csv(self):
+    def data(self):
 
-        self.show_notification("this is a test this is a test this is a test")
+        table_settings = self.index_table_container.data()
+        if 'error' in table_settings:
+            self.show_notification(table_settings['error'], warn=True)
+            return
 
+        resource_settings = self.index_table_container.resources_settings.data()
+        if 'error' in resource_settings:
+            self.show_notification(resource_settings['error'], warn=True)
+            return
 
-    @staticmethod
-    def flash_widget_red(widget, duration=100):
-        original_stylesheet = widget.styleSheet()
+        user_settings = self.index_table_container.user_settings.data()
+        if 'error' in user_settings:
+            self.show_notification(user_settings['error'], warn=True)
+            return
 
-        # Store the original background color if it exists
-        original_bg = widget.property("originalBackground")
-        if original_bg is None:
-            original_bg = widget.palette().color(widget.backgroundRole()).name()
-            widget.setProperty("originalBackground", original_bg)
+        kit_settings = self.index_table_container.index_kit_settings.data()
+        if 'error' in kit_settings:
+            self.show_notification(kit_settings['error'], warn=True)
+            return
 
-        # Set red background
-        widget.setStyleSheet(f"{original_stylesheet}background-color: #FFD6D7;")
+        all_data = {
+            'user_info': user_settings,
+            'resource': resource_settings,
+            'index_kit': kit_settings,
+            'indexes': table_settings
+        }
 
-        # Create a timer to reset the style
-        timer = QTimer(widget)
-        timer.setSingleShot(True)
-        timer.timeout.connect(lambda: widget.setStyleSheet(original_stylesheet))
-        timer.start(duration)
-
-    def validate_columns(self):
-        layout_name = self.index_table_container.resources_settings.widgets['layout'].currentText()
-        if "fixed" in layout_name:
-            req_field_names = set(self.fixed_layout_labels)
-        elif "standard" in layout_name:
-            req_field_names = set(self.standard_layout_labels)
-        else:
-            req_field_names = set()
-
-        existing_column_indexes = {self.index_table_container.tablewidget.horizontalHeaderItem(col).text() for col in
-                                   range(self.index_table_container.tablewidget.columnCount())}
-
-        if req_field_names.issubset(existing_column_indexes):
-            return True
-
+        return all_data
 
     @staticmethod
     def get_columns_as_dataframe(table_widget, column_names):
@@ -196,7 +188,9 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("Index Definition Converter")
+        self.setWindowIcon(qta.icon('fa5b.jedi-order', color='blue'))
+
+        self.setWindowTitle("index tool")
         convert_widget = IndexDefinitionConverter()
 
         # Set the central widget of the Window.

@@ -3,7 +3,6 @@ from PySide6.QtWidgets import QGroupBox, QFormLayout, QLineEdit, QComboBox, QHBo
 from datetime import datetime
 
 
-
 class UserInfo(QGroupBox):
     def __init__(self):
         super().__init__()
@@ -42,7 +41,7 @@ class UserInfo(QGroupBox):
     def set_filepath(self, filepath):
         self.widgets['file_path'].setText(str(filepath))
 
-    def settings(self):
+    def data(self):
         now = datetime.now()
         date_time = now.strftime("%m/%d/%Y, %H:%M:%S")
 

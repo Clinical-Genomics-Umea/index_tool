@@ -4,16 +4,23 @@ from PySide6.QtGui import QColor, QFont
 
 
 class Toast(QFrame):
-    def __init__(self, parent=None, message="", duration=5000):
+    def __init__(self, parent=None, message="", duration=5000, warn=False):
         super().__init__(parent)
         self.setMinimumWidth(300)  # Set minimum width
         self.setMinimumHeight(80)  # Set minimum height
-        self.setStyleSheet("""
-                background-color: rgba(50, 50, 50, 180);
-                border-radius: 8px;
-            """)
+
+        if warn:
+            self.setStyleSheet("""
+                    background-color: rgba(180, 10, 10, 180);
+                    border-radius: 8px;
+                    """)
+        else:
+            self.setStyleSheet("""
+                    background-color: rgba(50, 50, 50, 180);
+                    border-radius: 8px;
+                    """)
+
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
-        # self.setAttribute(Qt.WA_TranslucentBackground)
 
         main_layout = QVBoxLayout()
 

@@ -43,14 +43,25 @@ class IndexTableContainer(QWidget):
 
         self.resources_settings.widgets['layout'].currentTextChanged.connect(self.set_draggable_layout)
 
-    def table_settings(self):
+    def current_label_set(self):
+        current_label_set_name = self.resources_settings.widgets['layout'].currentText()
+        return self.index_label_sets.get(current_label_set_name)
+
+    def data(self):
         df = self.index_table_to_dataframe()
-        used_labels = set(df.columns)
-        selected_labels = set(self.draggable_labels_container.selected_labels)
 
-        if not used_labels.issubset(selected_labels):
-            unset_labels = selected_labels - used_labels
+        if df.empty:
+            return {'error': 'Table is empty. Please load data.'}
 
+        table_labels = set(df.columns)
+        selected_layout_labels = set(self.current_label_set())
+        unset_labels = selected_layout_labels - table_labels
+
+        if unset_labels:
+            return {
+                'error': 'Required header labels are not set in the table: {}'.format(', '.join(unset_labels))}
+
+        return df.to_dict(orient='records')
 
     def index_table_to_dataframe(self) -> pd.DataFrame:
         # Get the number of rows and columns in the QTableWidget

@@ -7,6 +7,8 @@ class DraggableLabelsContainer(QGroupBox):
     def __init__(self, index_label_sets):
         super().__init__()
 
+        self.index_label_sets = index_label_sets
+
         self.setFixedWidth(1006)
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)

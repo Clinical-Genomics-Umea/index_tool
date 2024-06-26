@@ -30,15 +30,15 @@ class IndexKitSettings(QGroupBox):
 
         self.setLayout(layout)
 
-    def settings(self):
-        data = dict()
+    def data(self):
+        data_dict = dict()
         for key, widget in self.widgets.items():
             if isinstance(widget, QLineEdit):
-                data[key] = widget.text()
+                data_dict[key] = widget.text()
             elif isinstance(widget, QComboBox):
-                data[key] = widget.currentText()
+                data_dict[key] = widget.currentText()
 
-        return data
+        return data_dict
 
 
 class VersionValidator(QValidator):
