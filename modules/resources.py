@@ -4,27 +4,32 @@ from PySide6.QtWidgets import QGroupBox, QFormLayout, QLineEdit, QComboBox, QHBo
 
 
 class ResourcesSettings(QGroupBox):
-    def __init__(self, index_label_set_names):
+    def __init__(self, kit_type_fields: dict):
         super().__init__()
         layout = QFormLayout()
         self.setTitle("Resources Settings")
         self.setFixedWidth(500)
 
+        self.regex_index = QRegularExpression(r'^(?!.*x.*x)([IUN](?:\d+|x))+$')
+        self.regex_read = QRegularExpression(r'^(?!.*x.*x)([YUN](?:\d+|x))+$')
+
+        self.kit_type_fields = kit_type_fields
+        print(kit_type_fields)
+
         self.widgets = {
             "adapter_read1": QLineEdit(),
             "adapter_read2": QLineEdit(),
-            'layout': QComboBox(),
+            'kit_type': QComboBox(),
             'override_cycles_pattern_r1': QLineEdit(),
             'override_cycles_pattern_i1': QLineEdit(),
             'override_cycles_pattern_i2': QLineEdit(),
             'override_cycles_pattern_r2': QLineEdit(),
         }
 
-        self.widgets['layout'].addItems(index_label_set_names)
+        self.widgets['kit_type'].addItems(list(kit_type_fields))
 
         override_layout = QHBoxLayout()
         override_layout.setContentsMargins(0, 0, 0, 0)
-
 
         override_h_layout = QHBoxLayout()
         override_h_layout.setContentsMargins(0, 0, 0, 0)
@@ -44,34 +49,24 @@ class ResourcesSettings(QGroupBox):
         override_widget = QWidget()
         override_widget.setLayout(override_layout)
 
-
         layout.addRow("adapter read1", self.widgets['adapter_read1'])
         layout.addRow("adapter read2", self.widgets['adapter_read2'])
-        layout.addRow("layout", self.widgets['layout'])
+        layout.addRow("layout", self.widgets['kit_type'])
 
         layout.addRow("", override_h_widget)
         layout.addRow("override cycles pattern", override_widget)
 
-        # set validators
-
-        read1_validator = AdapterValidator(self.widgets['adapter_read1'])
-        self.widgets['adapter_read1'].setValidator(read1_validator)
-
-        read2_validator = AdapterValidator(self.widgets['adapter_read2'])
-        self.widgets['adapter_read2'].setValidator(read2_validator)
-
-        i1_validator = IndexValidator(self.widgets['override_cycles_pattern_i1'])
-        self.widgets['override_cycles_pattern_i1'].setValidator(i1_validator)
-
-        i2_validator = IndexValidator(self.widgets['override_cycles_pattern_i2'])
-        self.widgets['override_cycles_pattern_i2'].setValidator(i2_validator)
-
-        r1_validator = ReadValidator(self.widgets['override_cycles_pattern_r1'])
-        self.widgets['override_cycles_pattern_r1'].setValidator(r1_validator)
-
-        r2_validator = ReadValidator(self.widgets['override_cycles_pattern_r2'])
-        self.widgets['override_cycles_pattern_r2'].setValidator(r2_validator)
-
+        # Setting validators for input fields
+        self.widgets['adapter_read1'].setValidator(AdapterValidator(self.widgets['adapter_read1']))
+        self.widgets['adapter_read2'].setValidator(AdapterValidator(self.widgets['adapter_read2']))
+        self.widgets['override_cycles_pattern_i1'].setValidator(
+            IndexValidator(self.widgets['override_cycles_pattern_i1']))
+        self.widgets['override_cycles_pattern_i2'].setValidator(
+            IndexValidator(self.widgets['override_cycles_pattern_i2']))
+        self.widgets['override_cycles_pattern_r1'].setValidator(
+            ReadValidator(self.widgets['override_cycles_pattern_r1']))
+        self.widgets['override_cycles_pattern_r2'].setValidator(
+            ReadValidator(self.widgets['override_cycles_pattern_r2']))
 
         self.setLayout(layout)
 
@@ -82,6 +77,17 @@ class ResourcesSettings(QGroupBox):
                 data_dict[key] = widget.text()
             elif isinstance(widget, QComboBox):
                 data_dict[key] = widget.currentText()
+
+        index_keys = ["override_cycles_pattern_i1", "override_cycles_pattern_i2"]
+
+        for k in index_keys:
+            if not self.regex_index.match(data_dict[k]).hasMatch():
+                raise ValueError(f"Incomplete override cycle pattern field: {k}")
+
+        read_keys = ["override_cycles_pattern_r1", "override_cycles_pattern_r2"]
+        for k in read_keys:
+            if not self.regex_read.match(data_dict[k]).hasMatch():
+                raise ValueError(f"Incomplete override cycle pattern field: {k}")
 
         return data_dict
 

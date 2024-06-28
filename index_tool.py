@@ -3,15 +3,16 @@ from pathlib import Path
 
 import pandas as pd
 
-from PySide6.QtCore import QTimer
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QFileDialog, QTableWidgetItem
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QFileDialog
 
 from modules.index_table import IndexTableContainer
+from modules.kit_fields import KitTypeFields
 from modules.notification import Toast
 from ui.widget import Ui_Form
 import qdarktheme
 import qtawesome as qta
 import sys
+import yaml
 
 
 class IndexDefinitionConverter(QWidget, Ui_Form):
@@ -20,20 +21,12 @@ class IndexDefinitionConverter(QWidget, Ui_Form):
         self.setupUi(self)
         self.stackedWidget.setCurrentWidget(self.csv_page_widget)
 
-        self.index_label_sets = {
-            'fixed_layout_single_index': ['fixed_pos', 'index_i7_name', 'index_i7'],
-            'fixed_layout_dual_index': ['fixed_pos', 'index_i7_name', 'index_i7', 'index_i5_name', 'index_i5'],
-            'fixed_layout_dual_index_single_name': ['fixed_pos', 'index_name', 'index_i7', 'index_i5'],
-            'standard_layout_pos_dual_index': ['pos_i7', 'index_i7_name', 'index_i7', 'pos_i5', 'index_i5_name', 'index_i5'],
-            'standard_layout_pos_single_index': ['pos_i7', 'index_i7_name', 'index_i7'],
-            'standard_layout_dual_index': ['index_i7_name', 'index_i7', 'index_i5_name', 'index_i5'],
-            'standard_layout_single_index': ['index_i7_name', 'index_i7'],
-        }
+        self.kit_type_fields = self.load_kit_type_fields(Path("config/kit_type_fields.yaml"))
 
         self.csv_radioButton.setChecked(True)
         self.help_pushButton.setCheckable(True)
 
-        self.index_table_container = IndexTableContainer(self.index_label_sets)
+        self.index_table_container = IndexTableContainer(self.kit_type_fields)
         self.tablewidget = self.index_table_container.tablewidget
 
         self.csv_page_widget.layout().addWidget(self.index_table_container)
@@ -43,12 +36,31 @@ class IndexDefinitionConverter(QWidget, Ui_Form):
         self.help_pushButton.clicked.connect(self.toggle_help)
         self.load_pushButton.clicked.connect(self.load_data)
 
-        index_header = self.tablewidget.horizontalHeader()
+        index_header = self.index_table_container.tablewidget.horizontalHeader()
         self.restore_pushButton.clicked.connect(index_header.restore_orig_header)
-        self.index_table_container.resources_settings.widgets['layout'].currentTextChanged.connect(
+        self.index_table_container.resources_settings.widgets['kit_type'].currentTextChanged.connect(
             index_header.restore_orig_header)
         self.export_pushButton.clicked.connect(self.export)
         self.unhide_pushButton.clicked.connect(self.index_table_container.tablewidget.show_all_columns)
+
+        self.index_table_container.notify_signal.connect(self.show_notification)
+
+    def get_kit_type_label_sets(self):
+        kit_type_sets = {}
+        for key, value in self.kit_types.items():
+            kit_type_sets[key] = value['labels']
+        return kit_type_sets
+
+    @staticmethod
+    def load_kit_type_fields(file_path):
+        kit_type_fields = dict()
+        with open(file_path, 'r') as file:
+            yaml_data = yaml.safe_load(file)
+            for kit_type, data in yaml_data.items():
+                kit_type_fields[kit_type] = KitTypeFields({kit_type: data})
+
+        return kit_type_fields
+
 
     def show_notification(self, message, warn=False):
         toast = Toast(self, message, warn=warn)
@@ -77,35 +89,6 @@ class IndexDefinitionConverter(QWidget, Ui_Form):
         self.index_table_container.user_settings.set_filepath(file)
         self.load_csv(file)
 
-    # def make_fixed_json(self):
-    #     df = self.get_columns_as_dataframe(self.index_table_container.tablewidget, self.fixed_layout_labels)
-    #     fixed_indices = df.to_dict(orient='records')
-    #     user_info = self.index_table_container.user_settings.settings()
-    #     resource = self.index_table_container.resources_settings.settings()
-    #     index_kit = self.index_table_container.index_kit_settings.settings()
-    #
-    #     data = {
-    #         'user_info': user_info,
-    #         'resource': resource,
-    #         'index_kit': index_kit,
-    #         'indices_dual_fixed': fixed_indices
-    #     }
-    #
-    #     print(json.dumps(data, indent=4))
-
-        # data = json.dumps(data)
-        # return data
-
-
-    def dataframe_to_qtablewidget(self, df):
-        self.tablewidget.setRowCount(df.shape[0])
-        self.tablewidget.setColumnCount(df.shape[1])
-        self.tablewidget.setHorizontalHeaderLabels(df.columns)
-
-        for i in range(df.shape[0]):
-            for j in range(df.shape[1]):
-                self.tablewidget.setItem(i, j, QTableWidgetItem(str(df.iat[i, j])))
-
     def open_file_dialog(self):
         file_dialog = QFileDialog(self)
         file_dialog.setFileMode(QFileDialog.ExistingFiles)
@@ -120,7 +103,7 @@ class IndexDefinitionConverter(QWidget, Ui_Form):
 
     def load_csv(self, file_path):
         df = pd.read_csv(file_path)
-        self.dataframe_to_qtablewidget(df)
+        self.index_table_container.set_index_table_data(df)
 
     def load_ikd_tsv(self, file_path):
         with open(file_path, 'r') as file:
@@ -131,26 +114,70 @@ class IndexDefinitionConverter(QWidget, Ui_Form):
         if self.csv_radioButton.isChecked():
             all_data = self.data()
 
+            if all_data:
+                self.save_dict_as_json(all_data)
+
+    def save_dict_as_json(self, data_dict):
+        # Create a file dialog
+
+        loaded_file = self.index_table_container.user_settings.get_filepath()
+        proposed_filename = loaded_file.with_suffix(".json").name
+
+        file_dialog = QFileDialog()
+
+        # Set the dialog to save mode and specify the filter for JSON files
+        file_path, _ = file_dialog.getSaveFileName(
+            caption="Save Index JSON File",
+            dir=proposed_filename,
+            filter="JSON Files (*.json)"
+        )
+
+        # Check if a file path was selected
+        if file_path:
+            # If the user didn't specify the .json extension, add it
+            if not file_path.endswith('.json'):
+                file_path += '.json'
+
+            # Write the dictionary to the JSON file
+            try:
+                with open(file_path, 'w') as json_file:
+                    json.dump(data_dict, json_file, indent=4)
+                self.show_notification(f"Index JSON file saved to: {file_path}")
+                return True
+            except Exception as e:
+                self.show_notification(f"Error saving JSON file: {str(e)}", warn=True)
+                print(f"Error saving JSON file: {str(e)}")
+                return False
+        else:
+            return False
+
     def data(self):
+        try:
+            table_settings = self.index_table_container.data()
 
-        table_settings = self.index_table_container.data()
-        if 'error' in table_settings:
-            self.show_notification(table_settings['error'], warn=True)
+        except Exception as e:
+            self.show_notification(f"Error: {str(e)}", warn=True)
             return
 
-        resource_settings = self.index_table_container.resources_settings.data()
-        if 'error' in resource_settings:
-            self.show_notification(resource_settings['error'], warn=True)
+        try:
+            resource_settings = self.index_table_container.resources_settings.data()
+
+        except Exception as e:
+            self.show_notification(f"Error: {str(e)}", warn=True)
             return
 
-        user_settings = self.index_table_container.user_settings.data()
-        if 'error' in user_settings:
-            self.show_notification(user_settings['error'], warn=True)
+        try:
+            user_settings = self.index_table_container.user_settings.data()
+
+        except Exception as e:
+            self.show_notification(f"Error: {str(e)}", warn=True)
             return
 
-        kit_settings = self.index_table_container.index_kit_settings.data()
-        if 'error' in kit_settings:
-            self.show_notification(kit_settings['error'], warn=True)
+        try:
+            kit_settings = self.index_table_container.index_kit_settings.data()
+
+        except Exception as e:
+            self.show_notification(f"Error: {str(e)}", warn=True)
             return
 
         all_data = {
@@ -161,26 +188,6 @@ class IndexDefinitionConverter(QWidget, Ui_Form):
         }
 
         return all_data
-
-    @staticmethod
-    def get_columns_as_dataframe(table_widget, column_names):
-        # Create a dictionary to store data for each column
-        data = {col: [] for col in column_names}
-
-        # Find the indexes of the required columns
-        column_indexes = {table_widget.horizontalHeaderItem(col).text(): col for col in
-                          range(table_widget.columnCount())}
-
-        # Extract data from the specific columns
-        for col_name in column_names:
-            col_idx = column_indexes[col_name]
-            for row in range(table_widget.rowCount()):
-                item = table_widget.item(row, col_idx)
-                data[col_name].append(item.text() if item else "")
-
-        # Convert the dictionary to a pandas DataFrame
-        df = pd.DataFrame(data)
-        return df
 
 
 # Subclass QMainWindow to customize your application's main window

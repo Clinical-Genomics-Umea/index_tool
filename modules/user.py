@@ -1,4 +1,6 @@
 import os
+from pathlib import Path
+
 from PySide6.QtWidgets import QGroupBox, QFormLayout, QLineEdit, QComboBox, QHBoxLayout
 from datetime import datetime
 
@@ -41,9 +43,12 @@ class UserInfo(QGroupBox):
     def set_filepath(self, filepath):
         self.widgets['file_path'].setText(str(filepath))
 
+    def get_filepath(self):
+        return Path(self.widgets['file_path'].text())
+
     def data(self):
         now = datetime.now()
-        date_time = now.strftime("%m/%d/%Y, %H:%M:%S")
+        date_time = now.strftime("%y%m%d %H.%M.%S")
 
         self.widgets['timestamp'].setText(date_time)
 
@@ -53,5 +58,8 @@ class UserInfo(QGroupBox):
                 data[key] = widget.text()
             elif isinstance(widget, QComboBox):
                 data[key] = widget.currentText()
+
+        if data['user'] == "":
+            data['user'] = data['ad_user']
 
         return data

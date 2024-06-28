@@ -1,26 +1,14 @@
-from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QGraphicsOpacityEffect, QPushButton, QHBoxLayout, QFrame
-from PySide6.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve
+from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QGraphicsOpacityEffect, QPushButton, QHBoxLayout, QFrame, \
+    QMainWindow, QApplication, QSizePolicy
+from PySide6.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve, QPoint
 from PySide6.QtGui import QColor, QFont
 
 
 class Toast(QFrame):
     def __init__(self, parent=None, message="", duration=5000, warn=False):
         super().__init__(parent)
-        self.setMinimumWidth(300)  # Set minimum width
-        self.setMinimumHeight(80)  # Set minimum height
 
-        if warn:
-            self.setStyleSheet("""
-                    background-color: rgba(180, 10, 10, 180);
-                    border-radius: 8px;
-                    """)
-        else:
-            self.setStyleSheet("""
-                    background-color: rgba(50, 50, 50, 180);
-                    border-radius: 8px;
-                    """)
-
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        self.warn = warn
 
         main_layout = QVBoxLayout()
 
@@ -33,33 +21,15 @@ class Toast(QFrame):
         top_bar_layout.addStretch()
 
         # Create close button
-        close_button = QPushButton("×")
-        close_button.setFixedSize(25, 25)
-        close_button.setStyleSheet("""
-                   QPushButton {
-                       background-color: transparent;
-                       color: white;
-                       font-size: 16px;
-                   }
-                   QPushButton:hover {
-                       background-color: rgba(255, 255, 255, 30);
-                   }
-               """)
-        close_button.clicked.connect(self.close)
-        top_bar_layout.addWidget(close_button)
+        self.close_button = QPushButton("×")
+        self.close_button.clicked.connect(self.close)
+        top_bar_layout.addWidget(self.close_button)
 
         main_layout.addLayout(top_bar_layout)
 
         self.label = QLabel(message)
-        self.label.setStyleSheet("""
-                background-color: transparent;
-                color: white;
-                padding: 10px;
-            """)
-        font = QFont()
-        font.setPointSize(12)  # Increase font size
-        self.label.setFont(font)
-        self.label.setWordWrap(True)  # Enable word wrapping
+        self.font = QFont()
+
         main_layout.addWidget(self.label)
         self.setLayout(main_layout)
 
@@ -78,18 +48,76 @@ class Toast(QFrame):
         self.fade_anim.setEasingCurve(QEasingCurve.InOutQuad)
         self.fade_anim.finished.connect(self.close)
 
+        self.setup()
+
+    def setup(self):
+        self.setFixedWidth(350)
+        self.setMinimumHeight(100)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.MinimumExpanding)
+
+        if self.warn:
+            self.setStyleSheet("""
+                    background-color: rgba(180, 10, 10, 180);
+                    border-radius: 8px;
+                    """)
+        else:
+            self.setStyleSheet("""
+                    background-color: rgba(50, 50, 50, 180);
+                    border-radius: 8px;
+                    """)
+
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+
+        self.close_button.setFixedSize(25, 25)
+        self.close_button.setStyleSheet("""
+                   QPushButton {
+                       background-color: transparent;
+                       color: white;
+                       font-size: 16px;
+                   }
+                   QPushButton:hover {
+                       background-color: rgba(255, 255, 255, 30);
+                   }
+               """)
+        self.label.setWordWrap(True)
+        self.label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.MinimumExpanding)
+        self.label.setStyleSheet("""
+                background-color: transparent;
+                color: white;
+                padding: 10px;
+            """)
+
+        self.font.setPointSize(12)  # Increase font size
+        self.label.setFont(self.font)
+
 
     def fade_out(self):
         self.fade_anim.start()
 
+    def get_main_window(self):
+        app = QApplication.instance()
+        for widget in app.topLevelWidgets():
+            if isinstance(widget, QMainWindow):
+                return widget
+        return None
+
     def show_toast(self):
         self.adjustSize()  # Ensure the widget size is updated
-        parent_rect = self.parent().rect()
 
-        # Calculate position to keep the widget fully visible
-        x = min(parent_rect.right() - self.width() - 20,
-                max(parent_rect.left() + 20, parent_rect.right() - self.width() - 20))
-        y = parent_rect.top() + 10
+        main_window = self.get_main_window()
+        print(main_window)
+        self.position_popup()
 
-        self.move(x, y)
         super().show()
+
+    def position_popup(self):
+        # Get the main window instance
+        main_window = self.get_main_window()
+        if main_window:
+            main_rect = main_window.geometry()
+            popup_size = self.size()
+
+            # Calculate the position to center the popup within the main window
+            pos_x = main_rect.width() - popup_size.width() - 10
+            pos_y = 10
+            self.move(pos_x, pos_y)

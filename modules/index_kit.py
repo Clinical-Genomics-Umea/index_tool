@@ -31,12 +31,17 @@ class IndexKitSettings(QGroupBox):
         self.setLayout(layout)
 
     def data(self):
-        data_dict = dict()
+        data_dict = {}
         for key, widget in self.widgets.items():
             if isinstance(widget, QLineEdit):
                 data_dict[key] = widget.text()
             elif isinstance(widget, QComboBox):
                 data_dict[key] = widget.currentText()
+
+        missing_required_fields = [item for item in ["name", "display_name", "version"] if data_dict.get(item) == ""]
+
+        if missing_required_fields:
+            raise ValueError(f"Missing required index kit fields: {', '.join(missing_required_fields)}")
 
         return data_dict
 
