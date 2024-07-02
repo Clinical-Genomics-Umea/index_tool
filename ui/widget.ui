@@ -35,7 +35,7 @@
            <item>
             <widget class="QRadioButton" name="ilmn_radioButton">
              <property name="text">
-              <string>ilmn index kit</string>
+              <string>ilmn index tsv</string>
              </property>
             </widget>
            </item>
