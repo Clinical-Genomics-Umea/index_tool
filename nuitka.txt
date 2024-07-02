@@ -1,0 +1,1 @@
+python -m nuitka --standalone --enable-plugin=pyside6 --include-data-files=config/kit_type_fields.yaml=config/kit_type_fields.yaml --windows-console-mode=disable .\index_tool.py
