@@ -116,7 +116,7 @@ class Ui_Form(object):
 
         self.retranslateUi(Form)
 
-        self.stackedWidget.setCurrentIndex(0)
+        self.stackedWidget.setCurrentIndex(1)
 
 
         QMetaObject.connectSlotsByName(Form)
@@ -132,6 +132,6 @@ class Ui_Form(object):
         self.unhide_pushButton.setText(QCoreApplication.translate("Form", u"Unhide cols", None))
         self.restore_pushButton.setText(QCoreApplication.translate("Form", u"Restore headers", None))
         self.help_pushButton.setText(QCoreApplication.translate("Form", u"Help", None))
-        self.label_2.setText(QCoreApplication.translate("Form", u"1. select data source", None))
+        self.label_2.setText(QCoreApplication.translate("Form", u"Instructions will be added here.", None))
     # retranslateUi
 

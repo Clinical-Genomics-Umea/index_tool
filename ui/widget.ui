@@ -102,7 +102,7 @@
         </sizepolicy>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="data_page_widget">
         <property name="sizePolicy">
@@ -124,7 +124,7 @@
          <item alignment="Qt::AlignmentFlag::AlignHCenter">
           <widget class="QLabel" name="label_2">
            <property name="text">
-            <string>1. select data source</string>
+            <string>Instructions will be added here.</string>
            </property>
           </widget>
          </item>
