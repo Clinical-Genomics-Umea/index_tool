@@ -10,6 +10,7 @@ from modules.index_kit import IndexKitSettings
 from modules.resources import ResourcesSettings
 from modules.user import UserInfo
 from modules.notification import Toast
+import csv
 
 
 class IndexTableContainer(QWidget):
@@ -49,13 +50,72 @@ class IndexTableContainer(QWidget):
 
         self.resources_settings.widgets['kit_type'].currentTextChanged.connect(self.set_draggable_layout)
 
-        self.tablewidget_h_header.label_dropped.connect(self.override_cycles_autoset)
+        self.tablewidget_h_header.label_dropped.connect(self._override_cycles_autoset_label)
 
-    def notify_error(self, message, warn=True):
+    @staticmethod
+    def _detect_delimiter(file_path):
+        with open(file_path, 'r') as csvfile:
+            sample = csvfile.read()
+            sniffer = csv.Sniffer()
+            delimiter = sniffer.sniff(sample).delimiter
+
+            return delimiter
+
+    def _illumina_set_parameters(self, ikd):
+        self.resources_settings.set_layout_illumina(ikd.kit_type)
+        if 'name' in ikd.index_kit:
+            self.index_kit_settings.widgets['name'].setText(ikd.index_kit['name'].replace(' ', '').replace('-', ''))
+        if 'display_name' in ikd.index_kit:
+            self.index_kit_settings.widgets['display_name'].setText(ikd.index_kit['display_name'])
+        if 'version' in ikd.index_kit:
+            self.index_kit_settings.widgets['version'].setText(ikd.index_kit['version'])
+        if 'description' in ikd.index_kit:
+            self.index_kit_settings.widgets['description'].setText(ikd.index_kit['description'])
+
+        if 'adapter' in ikd.resources:
+            self.resources_settings.widgets['adapter_read1'].setText(ikd.resources['adapter'])
+        if 'adapter_read2' in ikd.resources:
+            self.resources_settings.widgets['adapter_read2'].setText(ikd.resources['adapter_read2'])
+
+    def illumina_preset(self, is_illumina_kit):
+        self.resources_settings.widgets['kit_type'].setDisabled(is_illumina_kit)
+        self.resources_settings.widgets['adapter_read1'].setDisabled(is_illumina_kit)
+        self.resources_settings.widgets['adapter_read2'].setDisabled(is_illumina_kit)
+        if is_illumina_kit:
+            self.draggable_labels_container.hide()
+        else:
+            self.draggable_labels_container.show()
+
+    def _override_preset(self):
+        self.resources_settings.widgets['override_cycles_pattern_r1'].setText("Yx")
+        self.resources_settings.widgets['override_cycles_pattern_r2'].setText("Yx")
+
+    def _notify_error(self, message, warn=True):
         toast = Toast(self, message, warn=warn)
         toast.show_toast()
 
-    def override_cycles_autoset(self, index, label):
+    def _override_cycles_autoset(self):
+        df = self.tablewidget.to_dataframe()
+        if df.empty:
+            return
+
+        for used_label in df.columns:
+            if used_label in ['index_i7', 'index_i5'] and not self.valid_index_sequences(used_label, df):
+                return
+
+            if used_label in ['index_i7', 'index_i5'] and not self.valid_index_lengths(used_label, df):
+                return
+                
+        for used_label in df.columns:
+            if used_label == 'index_i7' and self.valid_index_sequences(used_label, df):
+                index_length = df[used_label].str.len().unique()[0]
+                self.resources_settings.widgets['override_cycles_pattern_i1'].setText(f"I{index_length}")
+
+            elif used_label == 'index_i5' and self.valid_index_sequences(used_label, df):
+                index_length = df[used_label].str.len().unique()[0]
+                self.resources_settings.widgets['override_cycles_pattern_i2'].setText(f"I{index_length}")
+
+    def _override_cycles_autoset_label(self, index, label):
         df = self.tablewidget.to_dataframe()
         if df.empty:
             return
@@ -70,12 +130,12 @@ class IndexTableContainer(QWidget):
                 self.tablewidget_h_header.restore_orig_header_for_label(label)
                 return
 
-            ilen = df[label].str.len().unique()[0]
+            index_length = df[label].str.len().unique()[0]
 
             if label == 'index_i7':
-                self.resources_settings.widgets['override_cycles_pattern_i1'].setText(f"I{ilen}")
+                self.resources_settings.widgets['override_cycles_pattern_i1'].setText(f"I{index_length}")
             elif label == 'index_i5':
-                self.resources_settings.widgets['override_cycles_pattern_i2'].setText(f"I{ilen}")
+                self.resources_settings.widgets['override_cycles_pattern_i2'].setText(f"I{index_length}")
 
     def valid_index_sequences(self, label, df):
         # Custom function to check if a value should be considered empty
@@ -106,7 +166,7 @@ class IndexTableContainer(QWidget):
 
     def current_labels(self):
         current_kit_type_name = self.resources_settings.widgets['kit_type'].currentText()
-        return self.kit_type_fields[current_kit_type_name].all_fields()
+        return self.kit_type_fields[current_kit_type_name].fields
 
     def data(self):
         df = self.tablewidget.to_dataframe()
@@ -116,16 +176,14 @@ class IndexTableContainer(QWidget):
 
         table_labels = set(df.columns)
         selected_layout_labels = set(self.current_labels())
-        unset_labels = selected_layout_labels - table_labels
-
-        if unset_labels:
-            raise ValueError('Required header labels are not set in the table: {}'.format(', '.join(unset_labels)))
+        if unset_labels := selected_layout_labels - table_labels:
+            raise ValueError(
+                f"Required header labels are not set in the table: {', '.join(unset_labels)}"
+            )
 
         kit_type_name = self.resources_settings.widgets['kit_type'].currentText()
         kit_type_object = self.kit_type_fields[kit_type_name]
-        index_container_dict = self.tablewidget.to_index_container_dict(kit_type_object)
-
-        return index_container_dict
+        return self.tablewidget.to_index_container_dict(kit_type_object)
 
     def set_index_table_data(self, df):
 
@@ -311,8 +369,7 @@ class DroppableTableWidget(QTableWidget):
         for key, obj in data.items():
             print(key, len(obj))
 
-        df = pd.DataFrame(data)
-        return df
+        return pd.DataFrame(data)
 
     def notify_error(self, message, warn=True):
         toast = Toast(self, message, warn=warn)
@@ -343,17 +400,16 @@ class DroppableTableWidget(QTableWidget):
         # Create a DataFrame from the collected data
 
         df = pd.DataFrame(data)
-        index_container_index_dict = dict()
+        index_container_index_dict = {}
 
-        for container_name in kit_type_obj.all_container_names():
-            fields = kit_type_obj.container_fields(container_name)
-            _df = df[fields].copy().replace('nan', np.nan).replace('', np.nan).dropna(how='all')
+        for set_name in kit_type_obj.index_set_names:
+            _fields = kit_type_obj.index_set_fields(set_name)
+            _df = df[_fields].copy().replace('nan', np.nan).replace('', np.nan).dropna(how='all')
 
-            contains_nan = _df.isnull().any().any()
-            if not contains_nan:
-                index_container_index_dict[container_name] = _df.to_dict(orient='records')
+            if _df.isnull().any().any():
+                raise ValueError(f"Error: NaN values in the index table for {set_name}")
 
             else:
-                raise ValueError(f"Error: NaN values in the index table for {container_name}")
+                index_container_index_dict[set_name] = _df.to_dict(orient='records')
 
         return index_container_index_dict

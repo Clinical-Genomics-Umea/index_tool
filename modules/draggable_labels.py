@@ -23,7 +23,7 @@ class DraggableLabelsContainer(QGroupBox):
             field_layout = QHBoxLayout()
             field_layout.setContentsMargins(0, 0, 0, 0)
 
-            for field in kit_object.all_fields():
+            for field in kit_object.fields:
                 field_layout.addWidget(DraggableLabel(field))
 
             field_layout.addSpacerItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
@@ -31,7 +31,7 @@ class DraggableLabelsContainer(QGroupBox):
             self.layout.addWidget(self.kit_type_label_widgets[kit_type_name])
 
             first_key = next(iter(self.kit_type_fields))
-            self.selected_kit_type_labels = set(self.kit_type_fields[first_key].all_fields())
+            self.selected_kit_type_labels = set(self.kit_type_fields[first_key].fields)
             self.show_labels(first_key)
 
     def show_labels(self, selected_kit_type_name):

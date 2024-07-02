@@ -5,8 +5,9 @@ import pandas as pd
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QFileDialog
 
+from modules.illumina_indexes import IlluminaFormatIndexKitDefinition
 from modules.index_table import IndexTableContainer
-from modules.kit_fields import KitTypeFields
+from modules.kit_type import KitTypeFields
 from modules.notification import Toast
 from ui.widget import Ui_Form
 import qdarktheme
@@ -19,41 +20,40 @@ class IndexDefinitionConverter(QWidget, Ui_Form):
     def __init__(self) -> None:
         super().__init__()
         self.setupUi(self)
-        self.stackedWidget.setCurrentWidget(self.csv_page_widget)
+        self.stackedWidget.setCurrentWidget(self.data_page_widget)
 
-        self.kit_type_fields = self.load_kit_type_fields(Path("config/kit_type_fields.yaml"))
+        self.kit_type_obj = self._load_kit_type(Path("config/kit_type_fields.yaml"))
 
         self.csv_radioButton.setChecked(True)
         self.help_pushButton.setCheckable(True)
 
-        self.index_table_container = IndexTableContainer(self.kit_type_fields)
+        self.index_table_container = IndexTableContainer(self.kit_type_obj)
         self.tablewidget = self.index_table_container.tablewidget
 
-        self.csv_page_widget.layout().addWidget(self.index_table_container)
+        self.data_page_widget.layout().addWidget(self.index_table_container)
 
-        self.csv_radioButton.toggled.connect(self.change_view)
-        self.csv_radioButton.toggled.connect(self.change_view)
-        self.help_pushButton.clicked.connect(self.toggle_help)
-        self.load_pushButton.clicked.connect(self.load_data)
+        self.help_pushButton.clicked.connect(self._toggle_help)
+        self.load_pushButton.clicked.connect(self._load_data)
 
         index_header = self.index_table_container.tablewidget.horizontalHeader()
         self.restore_pushButton.clicked.connect(index_header.restore_orig_header)
         self.index_table_container.resources_settings.widgets['kit_type'].currentTextChanged.connect(
             index_header.restore_orig_header)
-        self.export_pushButton.clicked.connect(self.export)
+
+        self.export_pushButton.clicked.connect(self._export)
         self.unhide_pushButton.clicked.connect(self.index_table_container.tablewidget.show_all_columns)
-
         self.index_table_container.notify_signal.connect(self.show_notification)
+        self.csv_radioButton.toggled.connect(self._illumina_preset)
 
-    def get_kit_type_label_sets(self):
-        kit_type_sets = {}
-        for key, value in self.kit_types.items():
-            kit_type_sets[key] = value['labels']
-        return kit_type_sets
+    def _illumina_preset(self):
+        if self.ilmn_radioButton.isChecked():
+            self.index_table_container.illumina_preset(True)
+        else:
+            self.index_table_container.illumina_preset(False)
 
     @staticmethod
-    def load_kit_type_fields(file_path):
-        kit_type_fields = dict()
+    def _load_kit_type(file_path):
+        kit_type_fields = {}
         with open(file_path, 'r') as file:
             yaml_data = yaml.safe_load(file)
             for kit_type, data in yaml_data.items():
@@ -61,35 +61,29 @@ class IndexDefinitionConverter(QWidget, Ui_Form):
 
         return kit_type_fields
 
-
     def show_notification(self, message, warn=False):
         toast = Toast(self, message, warn=warn)
         toast.show_toast()
 
-    def toggle_help(self):
+    def _toggle_help(self):
         if self.help_pushButton.isChecked():
             self.stackedWidget.setCurrentWidget(self.help_page_widget)
         else:
-            if self.csv_radioButton.isChecked():
-                self.stackedWidget.setCurrentWidget(self.csv_page_widget)
-            if self.ilmn_radioButton.isChecked():
-                self.stackedWidget.setCurrentWidget(self.ilmn_page_widget)
+            self.stackedWidget.setCurrentWidget(self.data_page_widget)
 
-    def change_view(self):
-        if self.help_pushButton.isChecked():
-            return
+    def _load_data(self):
 
         if self.csv_radioButton.isChecked():
-            self.stackedWidget.setCurrentWidget(self.csv_page_widget)
-        if self.ilmn_radioButton.isChecked():
-            self.stackedWidget.setCurrentWidget(self.ilmn_page_widget)
+            if file := self._open_file_dialog():
+                self.index_table_container.user_settings.set_filepath(file)
+                self._load_csv(file)
 
-    def load_data(self):
-        file = self.open_file_dialog()
-        self.index_table_container.user_settings.set_filepath(file)
-        self.load_csv(file)
+        elif self.ilmn_radioButton.isChecked():
+            if file := self._open_file_dialog():
+                self.index_table_container.user_settings.set_filepath(file)
+                self._load_ikd(file)
 
-    def open_file_dialog(self):
+    def _open_file_dialog(self):
         file_dialog = QFileDialog(self)
         file_dialog.setFileMode(QFileDialog.ExistingFiles)
         if self.ilmn_radioButton.isChecked():
@@ -101,24 +95,24 @@ class IndexDefinitionConverter(QWidget, Ui_Form):
             file_path = file_dialog.selectedFiles()[0]
             return Path(file_path)
 
-    def load_csv(self, file_path):
+    def _load_csv(self, file_path):
         df = pd.read_csv(file_path)
         self.index_table_container.set_index_table_data(df)
+        self.index_table_container._override_preset()
 
-    def load_ikd_tsv(self, file_path):
-        with open(file_path, 'r') as file:
-            content = file.read()
-        self.plainTextEdit.setPlainText(content)
+    def _load_ikd(self, file_path: Path):
+        illumina_ikd = IlluminaFormatIndexKitDefinition(file_path)
+        df = illumina_ikd.indices_df
+        self.index_table_container.set_index_table_data(df)
+        self.index_table_container._illumina_set_parameters(illumina_ikd)
+        self.index_table_container._override_cycles_autoset()
+        self.index_table_container._override_preset()
 
-    def export(self):
-        if self.csv_radioButton.isChecked():
-            all_data = self.data()
+    def _export(self):
+        all_data = self.data()
 
-            if all_data:
-                self.save_dict_as_json(all_data)
-
-    def save_dict_as_json(self, data_dict):
-        # Create a file dialog
+        if not all_data:
+            return
 
         loaded_file = self.index_table_container.user_settings.get_filepath()
         proposed_filename = loaded_file.with_suffix(".json").name
@@ -141,7 +135,7 @@ class IndexDefinitionConverter(QWidget, Ui_Form):
             # Write the dictionary to the JSON file
             try:
                 with open(file_path, 'w') as json_file:
-                    json.dump(data_dict, json_file, indent=4)
+                    json.dump(all_data, json_file, indent=4)
                 self.show_notification(f"Index JSON file saved to: {file_path}")
                 return True
             except Exception as e:
@@ -180,14 +174,15 @@ class IndexDefinitionConverter(QWidget, Ui_Form):
             self.show_notification(f"Error: {str(e)}", warn=True)
             return
 
-        all_data = {
+        kit_type = resource_settings['kit_type']
+        kit_settings['kit_type'] = self.kit_type_obj[kit_type].data
+
+        return {
             'user_info': user_settings,
             'resource': resource_settings,
             'index_kit': kit_settings,
-            'indexes': table_settings
+            'indexes': table_settings,
         }
-
-        return all_data
 
 
 # Subclass QMainWindow to customize your application's main window

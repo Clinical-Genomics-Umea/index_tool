@@ -16,8 +16,8 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QGroupBox, QHBoxLayout, QLabel,
-    QPlainTextEdit, QPushButton, QRadioButton, QSizePolicy,
-    QSpacerItem, QStackedWidget, QVBoxLayout, QWidget)
+    QPushButton, QRadioButton, QSizePolicy, QSpacerItem,
+    QStackedWidget, QVBoxLayout, QWidget)
 
 class Ui_Form(object):
     def setupUi(self, Form):
@@ -88,13 +88,13 @@ class Ui_Form(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.stackedWidget.sizePolicy().hasHeightForWidth())
         self.stackedWidget.setSizePolicy(sizePolicy)
-        self.csv_page_widget = QWidget()
-        self.csv_page_widget.setObjectName(u"csv_page_widget")
-        sizePolicy.setHeightForWidth(self.csv_page_widget.sizePolicy().hasHeightForWidth())
-        self.csv_page_widget.setSizePolicy(sizePolicy)
-        self.verticalLayout_3 = QVBoxLayout(self.csv_page_widget)
+        self.data_page_widget = QWidget()
+        self.data_page_widget.setObjectName(u"data_page_widget")
+        sizePolicy.setHeightForWidth(self.data_page_widget.sizePolicy().hasHeightForWidth())
+        self.data_page_widget.setSizePolicy(sizePolicy)
+        self.verticalLayout_3 = QVBoxLayout(self.data_page_widget)
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
-        self.stackedWidget.addWidget(self.csv_page_widget)
+        self.stackedWidget.addWidget(self.data_page_widget)
         self.help_page_widget = QWidget()
         self.help_page_widget.setObjectName(u"help_page_widget")
         sizePolicy.setHeightForWidth(self.help_page_widget.sizePolicy().hasHeightForWidth())
@@ -107,18 +107,6 @@ class Ui_Form(object):
         self.verticalLayout_4.addWidget(self.label_2, 0, Qt.AlignmentFlag.AlignHCenter)
 
         self.stackedWidget.addWidget(self.help_page_widget)
-        self.ilmn_page_widget = QWidget()
-        self.ilmn_page_widget.setObjectName(u"ilmn_page_widget")
-        sizePolicy.setHeightForWidth(self.ilmn_page_widget.sizePolicy().hasHeightForWidth())
-        self.ilmn_page_widget.setSizePolicy(sizePolicy)
-        self.verticalLayout_6 = QVBoxLayout(self.ilmn_page_widget)
-        self.verticalLayout_6.setObjectName(u"verticalLayout_6")
-        self.plainTextEdit = QPlainTextEdit(self.ilmn_page_widget)
-        self.plainTextEdit.setObjectName(u"plainTextEdit")
-
-        self.verticalLayout_6.addWidget(self.plainTextEdit)
-
-        self.stackedWidget.addWidget(self.ilmn_page_widget)
 
         self.horizontalLayout.addWidget(self.stackedWidget)
 
@@ -128,7 +116,7 @@ class Ui_Form(object):
 
         self.retranslateUi(Form)
 
-        self.stackedWidget.setCurrentIndex(1)
+        self.stackedWidget.setCurrentIndex(0)
 
 
         QMetaObject.connectSlotsByName(Form)

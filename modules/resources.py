@@ -33,10 +33,10 @@ class ResourcesSettings(QGroupBox):
 
         override_h_layout = QHBoxLayout()
         override_h_layout.setContentsMargins(0, 0, 0, 0)
-        override_h_layout.addWidget(QLabel("R1"))
-        override_h_layout.addWidget(QLabel("I1"))
-        override_h_layout.addWidget(QLabel("I2"))
-        override_h_layout.addWidget(QLabel("R2"))
+        override_h_layout.addWidget(QLabel("read1"))
+        override_h_layout.addWidget(QLabel("index1"))
+        override_h_layout.addWidget(QLabel("index2"))
+        override_h_layout.addWidget(QLabel("read2"))
 
         override_layout.addWidget(self.widgets['override_cycles_pattern_r1'])
         override_layout.addWidget(self.widgets['override_cycles_pattern_i1'])
@@ -51,7 +51,7 @@ class ResourcesSettings(QGroupBox):
 
         layout.addRow("adapter read1", self.widgets['adapter_read1'])
         layout.addRow("adapter read2", self.widgets['adapter_read2'])
-        layout.addRow("layout", self.widgets['kit_type'])
+        layout.addRow("kit type", self.widgets['kit_type'])
 
         layout.addRow("", override_h_widget)
         layout.addRow("override cycles pattern", override_widget)
@@ -70,8 +70,11 @@ class ResourcesSettings(QGroupBox):
 
         self.setLayout(layout)
 
+    def set_layout_illumina(self, value):
+        self.widgets['kit_type'].setCurrentText(value)
+
     def data(self):
-        data_dict = dict()
+        data_dict = {}
         for key, widget in self.widgets.items():
             if isinstance(widget, QLineEdit):
                 data_dict[key] = widget.text()

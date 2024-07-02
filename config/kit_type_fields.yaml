@@ -1,23 +1,23 @@
 ---
 'fixed_single_index':
-  - container_name: 'i7_fixed'
+  - name: 'i7_fixed'
     fields: [ 'fixed_pos', 'index_i7_name', 'index_i7' ]
 'fixed_dual_index':
-  - container_name: 'dual_fixed'
+  - name: 'dual_fixed'
     fields: [ 'fixed_pos', 'index_i7_name', 'index_i7', 'index_i5_name', 'index_i5' ]
 'standard_pos_dual_index':
-  - container_name: 'i7'
+  - name: 'i7'
     fields: [ 'pos_i7', 'index_i7_name', 'index_i7' ]
-  - container_name: 'i5'
+  - name: 'i5'
     fields: [ 'pos_i5', 'index_i5_name', 'index_i5' ]
 'standard_pos_single_index':
-  - container_name: 'i7'
+  - name: 'i7'
     fields: [ 'pos_i7', 'index_i7_name', 'index_i7' ]
 'standard_dual_index':
-  - container_name: 'i7'
+  - name: 'i7'
     fields: [ 'index_i7_name', 'index_i7' ]
-  - container_name: 'i5'
+  - name: 'i5'
     fields: [ 'index_i5_name', 'index_i5' ]
 'standard_single_index':
-  - container_name: 'i7'
+  - name: 'i7'
     fields: [ 'index_i7_name', 'index_i7' ]
