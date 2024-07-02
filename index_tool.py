@@ -14,6 +14,7 @@ import qdarktheme
 import qtawesome as qta
 import sys
 import yaml
+import csv
 
 
 class IndexDefinitionConverter(QWidget, Ui_Form):
@@ -44,6 +45,18 @@ class IndexDefinitionConverter(QWidget, Ui_Form):
         self.unhide_pushButton.clicked.connect(self.index_table_container.tablewidget.show_all_columns)
         self.index_table_container.notify_signal.connect(self.show_notification)
         self.csv_radioButton.toggled.connect(self._illumina_preset)
+
+    @staticmethod
+    def _detect_delimiter(file_path: Path) -> str:
+        with open(file_path, 'r') as csvfile:
+            content = csvfile.read()
+            sniffer = csv.Sniffer()
+            delimiter = sniffer.sniff(content).delimiter
+
+            print(delimiter)
+            print(type(delimiter))
+
+            return delimiter
 
     def _illumina_preset(self):
         if self.ilmn_radioButton.isChecked():
@@ -96,17 +109,20 @@ class IndexDefinitionConverter(QWidget, Ui_Form):
             return Path(file_path)
 
     def _load_csv(self, file_path):
-        df = pd.read_csv(file_path)
+
+        delim = self._detect_delimiter(file_path)
+
+        df = pd.read_csv(file_path, sep=delim)
         self.index_table_container.set_index_table_data(df)
-        self.index_table_container._override_preset()
+        self.index_table_container.override_preset()
 
     def _load_ikd(self, file_path: Path):
         illumina_ikd = IlluminaFormatIndexKitDefinition(file_path)
         df = illumina_ikd.indices_df
         self.index_table_container.set_index_table_data(df)
-        self.index_table_container._illumina_set_parameters(illumina_ikd)
-        self.index_table_container._override_cycles_autoset()
-        self.index_table_container._override_preset()
+        self.index_table_container.illumina_set_parameters(illumina_ikd)
+        self.index_table_container.override_cycles_autoset()
+        self.index_table_container.override_preset()
 
     def _export(self):
         all_data = self.data()

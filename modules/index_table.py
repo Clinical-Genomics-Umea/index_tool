@@ -61,7 +61,7 @@ class IndexTableContainer(QWidget):
 
             return delimiter
 
-    def _illumina_set_parameters(self, ikd):
+    def illumina_set_parameters(self, ikd):
         self.resources_settings.set_layout_illumina(ikd.kit_type)
         if 'name' in ikd.index_kit:
             self.index_kit_settings.widgets['name'].setText(ikd.index_kit['name'].replace(' ', '').replace('-', ''))
@@ -86,7 +86,7 @@ class IndexTableContainer(QWidget):
         else:
             self.draggable_labels_container.show()
 
-    def _override_preset(self):
+    def override_preset(self):
         self.resources_settings.widgets['override_cycles_pattern_r1'].setText("Yx")
         self.resources_settings.widgets['override_cycles_pattern_r2'].setText("Yx")
 
@@ -94,7 +94,7 @@ class IndexTableContainer(QWidget):
         toast = Toast(self, message, warn=warn)
         toast.show_toast()
 
-    def _override_cycles_autoset(self):
+    def override_cycles_autoset(self):
         df = self.tablewidget.to_dataframe()
         if df.empty:
             return
