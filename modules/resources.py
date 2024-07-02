@@ -1,21 +1,18 @@
 from PySide6.QtCore import QRegularExpression
 from PySide6.QtGui import QValidator
-from PySide6.QtWidgets import QGroupBox, QFormLayout, QLineEdit, QComboBox, QHBoxLayout, QLabel, QWidget
+from PySide6.QtWidgets import (QGroupBox, QFormLayout, QLineEdit, QComboBox,
+                               QHBoxLayout, QLabel, QWidget)
 
 
 class ResourcesSettings(QGroupBox):
     def __init__(self, kit_type_fields: dict):
-        super().__init__()
-        layout = QFormLayout()
-        self.setTitle("Resources Settings")
+        super().__init__("Resources Settings")
         self.setFixedWidth(500)
-
-        self.regex_index = QRegularExpression(r'^(?!.*x.*x)([IUN](?:\d+|x))+$')
-        self.regex_read = QRegularExpression(r'^(?!.*x.*x)([YUN](?:\d+|x))+$')
-
         self.kit_type_fields = kit_type_fields
-        print(kit_type_fields)
+        self.setup_ui()
 
+    def setup_ui(self):
+        layout = QFormLayout(self)
         self.widgets = {
             "adapter_read1": QLineEdit(),
             "adapter_read2": QLineEdit(),
@@ -26,22 +23,15 @@ class ResourcesSettings(QGroupBox):
             'override_cycles_pattern_r2': QLineEdit(),
         }
 
-        self.widgets['kit_type'].addItems(list(kit_type_fields))
+        self.widgets['kit_type'].addItems(list(self.kit_type_fields))
 
         override_layout = QHBoxLayout()
-        override_layout.setContentsMargins(0, 0, 0, 0)
-
         override_h_layout = QHBoxLayout()
-        override_h_layout.setContentsMargins(0, 0, 0, 0)
-        override_h_layout.addWidget(QLabel("read1"))
-        override_h_layout.addWidget(QLabel("index1"))
-        override_h_layout.addWidget(QLabel("index2"))
-        override_h_layout.addWidget(QLabel("read2"))
+        for label in ["read1", "index1", "index2", "read2"]:
+            override_h_layout.addWidget(QLabel(label))
 
-        override_layout.addWidget(self.widgets['override_cycles_pattern_r1'])
-        override_layout.addWidget(self.widgets['override_cycles_pattern_i1'])
-        override_layout.addWidget(self.widgets['override_cycles_pattern_i2'])
-        override_layout.addWidget(self.widgets['override_cycles_pattern_r2'])
+        for widget in ['r1', 'i1', 'i2', 'r2']:
+            override_layout.addWidget(self.widgets[f'override_cycles_pattern_{widget}'])
 
         override_h_widget = QWidget()
         override_h_widget.setLayout(override_h_layout)
@@ -52,102 +42,71 @@ class ResourcesSettings(QGroupBox):
         layout.addRow("adapter read1", self.widgets['adapter_read1'])
         layout.addRow("adapter read2", self.widgets['adapter_read2'])
         layout.addRow("kit type", self.widgets['kit_type'])
-
         layout.addRow("", override_h_widget)
         layout.addRow("override cycles pattern", override_widget)
 
-        # Setting validators for input fields
-        self.widgets['adapter_read1'].setValidator(AdapterValidator(self.widgets['adapter_read1']))
-        self.widgets['adapter_read2'].setValidator(AdapterValidator(self.widgets['adapter_read2']))
-        self.widgets['override_cycles_pattern_i1'].setValidator(
-            IndexValidator(self.widgets['override_cycles_pattern_i1']))
-        self.widgets['override_cycles_pattern_i2'].setValidator(
-            IndexValidator(self.widgets['override_cycles_pattern_i2']))
-        self.widgets['override_cycles_pattern_r1'].setValidator(
-            ReadValidator(self.widgets['override_cycles_pattern_r1']))
-        self.widgets['override_cycles_pattern_r2'].setValidator(
-            ReadValidator(self.widgets['override_cycles_pattern_r2']))
+        self.set_validators()
 
-        self.setLayout(layout)
+    def set_validators(self):
+        self.widgets['adapter_read1'].setValidator(AdapterValidator())
+        self.widgets['adapter_read2'].setValidator(AdapterValidator())
+        self.widgets['override_cycles_pattern_i1'].setValidator(IndexValidator())
+        self.widgets['override_cycles_pattern_i2'].setValidator(IndexValidator())
+        self.widgets['override_cycles_pattern_r1'].setValidator(ReadValidator())
+        self.widgets['override_cycles_pattern_r2'].setValidator(ReadValidator())
 
     def set_layout_illumina(self, value):
         self.widgets['kit_type'].setCurrentText(value)
 
     def data(self):
-        data_dict = {}
-        for key, widget in self.widgets.items():
-            if isinstance(widget, QLineEdit):
-                data_dict[key] = widget.text()
-            elif isinstance(widget, QComboBox):
-                data_dict[key] = widget.currentText()
+        data_dict = {key: widget.text() if isinstance(widget, QLineEdit) else widget.currentText()
+                     for key, widget in self.widgets.items()}
 
-        index_keys = ["override_cycles_pattern_i1", "override_cycles_pattern_i2"]
-
-        for k in index_keys:
-            if not self.regex_index.match(data_dict[k]).hasMatch():
+        for k in ["override_cycles_pattern_i1", "override_cycles_pattern_i2"]:
+            if not IndexValidator.regex.match(data_dict[k]).hasMatch():
                 raise ValueError(f"Incomplete override cycle pattern field: {k}")
 
-        read_keys = ["override_cycles_pattern_r1", "override_cycles_pattern_r2"]
-        for k in read_keys:
-            if not self.regex_read.match(data_dict[k]).hasMatch():
+        for k in ["override_cycles_pattern_r1", "override_cycles_pattern_r2"]:
+            if not ReadValidator.regex.match(data_dict[k]).hasMatch():
                 raise ValueError(f"Incomplete override cycle pattern field: {k}")
 
         return data_dict
 
 
-class IndexValidator(QValidator):
-    def __init__(self, parent=None):
+class BaseValidator(QValidator):
+    def __init__(self, regex, parent=None):
         super().__init__(parent)
-        self.regex = QRegularExpression(r'^(?!.*x.*x)([IUN](?:\d+|x))+$')
+        self.regex = QRegularExpression(regex)
 
     def validate(self, input_string, pos):
-        if input_string == "":
+        if not input_string:
             return QValidator.Acceptable, input_string, pos
 
-        # Check if the input matches the full pattern
         if self.regex.match(input_string).hasMatch():
             return QValidator.Acceptable, input_string, pos
 
-        # Check if the input is a valid partial match
-        partial_regex = QRegularExpression(r'^(?!.*x.*x)([IUN](?:\d+|x))*([IUN](?:\d*|x)?)?$')
+        partial_regex = QRegularExpression(self.regex.pattern().replace('+', '*') + r'([' + self.regex.pattern()[2] + r'](?:\d*|x)?)?$')
         if partial_regex.match(input_string).hasMatch():
             return QValidator.Intermediate, input_string, pos
 
         return QValidator.Invalid, input_string, pos
 
 
-class ReadValidator(QValidator):
+class IndexValidator(BaseValidator):
+    regex = QRegularExpression(r'^(?!.*x.*x)([IUN](?:\d+|x))+$')
+
     def __init__(self, parent=None):
-        super().__init__(parent)
-        self.regex = QRegularExpression(r'^(?!.*x.*x)([YUN](?:\d+|x))+$')
+        super().__init__(self.regex.pattern(), parent)
 
-    def validate(self, input_string, pos):
-        if input_string == "":
-            return QValidator.Acceptable, input_string, pos
 
-        # Check if the input matches the full pattern
-        if self.regex.match(input_string).hasMatch():
-            return QValidator.Acceptable, input_string, pos
+class ReadValidator(BaseValidator):
+    regex = QRegularExpression(r'^(?!.*x.*x)([YUN](?:\d+|x))+$')
 
-        # Check if the input is a valid partial match
-        partial_regex = QRegularExpression(r'^(?!.*x.*x)([YUN](?:\d+|x))*([YUN](?:\d*|x)?)?$')
-        if partial_regex.match(input_string).hasMatch():
-            return QValidator.Intermediate, input_string, pos
-
-        return QValidator.Invalid, input_string, pos
+    def __init__(self, parent=None):
+        super().__init__(self.regex.pattern(), parent)
 
 
 class AdapterValidator(QValidator):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.regex = QRegularExpression(r'^(?!.*x.*x)([YUN](?:\d+|x))+$')
-
     def validate(self, input_string, pos):
-        valid_chars = 'ACGT+'
-
-        for char in input_string:
-            if char.upper() not in valid_chars:
-                return QValidator.Invalid
-
-        return QValidator.Acceptable
+        return QValidator.Acceptable if set(input_string.upper()) <= set('ACGT+') else QValidator.Invalid
 

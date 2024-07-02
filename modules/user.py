@@ -1,16 +1,17 @@
 import os
 from pathlib import Path
-
-from PySide6.QtWidgets import QGroupBox, QFormLayout, QLineEdit, QComboBox, QHBoxLayout
 from datetime import datetime
+from PySide6.QtWidgets import QGroupBox, QFormLayout, QLineEdit, QHBoxLayout
 
 
 class UserInfo(QGroupBox):
     def __init__(self):
-        super().__init__()
-        self.setTitle("User Info")
+        super().__init__("User Info")
         self.setFixedWidth(1006)
+        self.setup_ui()
+        self.initialize_values()
 
+    def setup_ui(self):
         self.widgets = {
             "user": QLineEdit(),
             "ad_user": QLineEdit(),
@@ -18,27 +19,34 @@ class UserInfo(QGroupBox):
             'timestamp': QLineEdit(),
         }
 
-        layout = QHBoxLayout()
+        layout = QHBoxLayout(self)
+        for column in self.create_form_layouts():
+            layout.addLayout(column)
 
-        first_col = QFormLayout()
-        second_col = QFormLayout()
+    def create_form_layouts(self):
+        layouts = []
+        fields = [
+            ("user", "user"),
+            ("ad user", "ad_user"),
+            ("source file path", "file_path"),
+            ("timestamp", "timestamp")
+        ]
 
-        first_col.addRow("user", self.widgets['user'])
-        first_col.addRow("ad user", self.widgets['ad_user'])
-        second_col.addRow("source file path", self.widgets['file_path'])
-        second_col.addRow("timestamp", self.widgets['timestamp'])
+        for i in range(0, len(fields), 2):
+            column = QFormLayout()
+            for label, widget_key in fields[i:i + 2]:
+                column.addRow(label, self.widgets[widget_key])
+            layouts.append(column)
 
-        layout.addLayout(first_col)
-        layout.addLayout(second_col)
+        return layouts
 
-        self.setLayout(layout)
-
+    def initialize_values(self):
         logged_in_user = os.getlogin()
         self.widgets['ad_user'].setText(logged_in_user)
-        self.widgets['ad_user'].setReadOnly(True)
         self.widgets['timestamp'].setText("< current datetime >")
-        self.widgets['timestamp'].setReadOnly(True)
-        self.widgets['file_path'].setReadOnly(True)
+
+        for widget in ['ad_user', 'timestamp', 'file_path']:
+            self.widgets[widget].setReadOnly(True)
 
     def set_filepath(self, filepath):
         self.widgets['file_path'].setText(str(filepath))
@@ -47,19 +55,12 @@ class UserInfo(QGroupBox):
         return Path(self.widgets['file_path'].text())
 
     def data(self):
-        now = datetime.now()
-        date_time = now.strftime("%y%m%d %H.%M.%S")
+        current_time = datetime.now().strftime("%y%m%d %H.%M.%S")
+        self.widgets['timestamp'].setText(current_time)
 
-        self.widgets['timestamp'].setText(date_time)
+        data = {key: widget.text() for key, widget in self.widgets.items()}
 
-        data = dict()
-        for key, widget in self.widgets.items():
-            if isinstance(widget, QLineEdit):
-                data[key] = widget.text()
-            elif isinstance(widget, QComboBox):
-                data[key] = widget.currentText()
-
-        if data['user'] == "":
+        if not data['user']:
             data['user'] = data['ad_user']
 
         return data

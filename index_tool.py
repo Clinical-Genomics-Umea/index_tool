@@ -15,6 +15,7 @@ import qtawesome as qta
 import sys
 import yaml
 import csv
+from typing import Dict, Any
 
 
 class IndexDefinitionConverter(QWidget, Ui_Form):
@@ -33,6 +34,9 @@ class IndexDefinitionConverter(QWidget, Ui_Form):
 
         self.data_page_widget.layout().addWidget(self.index_table_container)
 
+        self._connect_signals()
+
+    def _connect_signals(self):
         self.help_pushButton.clicked.connect(self._toggle_help)
         self.load_pushButton.clicked.connect(self._load_data)
 
@@ -50,155 +54,115 @@ class IndexDefinitionConverter(QWidget, Ui_Form):
     def _detect_delimiter(file_path: Path) -> str:
         with open(file_path, 'r') as csvfile:
             content = csvfile.read()
-            sniffer = csv.Sniffer()
-            delimiter = sniffer.sniff(content).delimiter
+            dialect = csv.Sniffer().sniff(content)
 
-            print(delimiter)
-            print(type(delimiter))
-
-            return delimiter
+            return dialect.delimiter
 
     def _illumina_preset(self):
-        if self.ilmn_radioButton.isChecked():
-            self.index_table_container.illumina_preset(True)
-        else:
-            self.index_table_container.illumina_preset(False)
+        self.index_table_container.illumina_preset(self.ilmn_radioButton.isChecked())
 
-    @staticmethod
-    def _load_kit_type(file_path):
-        kit_type_fields = {}
+    def _load_kit_type(self, file_path: Path) -> Dict[str, KitTypeFields]:
         with open(file_path, 'r') as file:
             yaml_data = yaml.safe_load(file)
-            for kit_type, data in yaml_data.items():
-                kit_type_fields[kit_type] = KitTypeFields({kit_type: data})
 
-        return kit_type_fields
+        try:
+            return {kit_type: KitTypeFields({kit_type: data}) for kit_type, data in yaml_data.items()}
+        except Exception as e:
+            self.show_notification(f"Error: {str(e)}", warn=True)
 
-    def show_notification(self, message, warn=False):
-        toast = Toast(self, message, warn=warn)
-        toast.show_toast()
+    def show_notification(self, message: str, warn: bool = False):
+        Toast(self, message, warn=warn).show_toast()
 
     def _toggle_help(self):
-        if self.help_pushButton.isChecked():
-            self.stackedWidget.setCurrentWidget(self.help_page_widget)
-        else:
-            self.stackedWidget.setCurrentWidget(self.data_page_widget)
+        self.stackedWidget.setCurrentWidget(
+            self.help_page_widget if self.help_pushButton.isChecked() else self.data_page_widget
+        )
 
     def _load_data(self):
+        file = self._open_file_dialog()
+        if file:
+            self.index_table_container.user_settings.set_filepath(file)
+            self._load_csv(file) if self.csv_radioButton.isChecked() else self._load_ikd(file)
 
-        if self.csv_radioButton.isChecked():
-            if file := self._open_file_dialog():
-                self.index_table_container.user_settings.set_filepath(file)
-                self._load_csv(file)
-
-        elif self.ilmn_radioButton.isChecked():
-            if file := self._open_file_dialog():
-                self.index_table_container.user_settings.set_filepath(file)
-                self._load_ikd(file)
-
-    def _open_file_dialog(self):
+    def _open_file_dialog(self) -> Path | None:
         file_dialog = QFileDialog(self)
         file_dialog.setFileMode(QFileDialog.ExistingFiles)
-        if self.ilmn_radioButton.isChecked():
-            file_dialog.setNameFilter("ILMN Index TSV files (*.tsv)")
-        elif self.csv_radioButton.isChecked():
-            file_dialog.setNameFilter("Index CSV files (*.csv)")
+        file_dialog.setNameFilter(
+            "ILMN Index TSV files (*.tsv)" if self.ilmn_radioButton.isChecked() else "Index CSV files (*.csv)")
 
         if file_dialog.exec():
-            file_path = file_dialog.selectedFiles()[0]
-            return Path(file_path)
+            return Path(file_dialog.selectedFiles()[0])
+        return None
 
-    def _load_csv(self, file_path):
+    def _load_data(self):
+        file = self._open_file_dialog()
+        if file:
+            self.index_table_container.user_settings.set_filepath(file)
+            self._load_csv(file) if self.csv_radioButton.isChecked() else self._load_ikd(file)
 
+    def _load_csv(self, file_path: Path):
         delim = self._detect_delimiter(file_path)
-
         df = pd.read_csv(file_path, sep=delim)
-        self.index_table_container.set_index_table_data(df)
-        self.index_table_container.override_preset()
+        self._set_index_table_data(df)
+
 
     def _load_ikd(self, file_path: Path):
         illumina_ikd = IlluminaFormatIndexKitDefinition(file_path)
-        df = illumina_ikd.indices_df
-        self.index_table_container.set_index_table_data(df)
+        self._set_index_table_data(illumina_ikd.indices_df)
         self.index_table_container.illumina_set_parameters(illumina_ikd)
         self.index_table_container.override_cycles_autoset()
+
+    def _set_index_table_data(self, df: pd.DataFrame):
+        self.index_table_container.set_index_table_data(df)
         self.index_table_container.override_preset()
 
     def _export(self):
         all_data = self.data()
-
         if not all_data:
             return
 
+        file_path = self._get_save_file_path()
+        if file_path:
+            self._save_json_file(file_path, all_data)
+
+    def _get_save_file_path(self) -> str:
         loaded_file = self.index_table_container.user_settings.get_filepath()
         proposed_filename = loaded_file.with_suffix(".json").name
-
-        file_dialog = QFileDialog()
-
-        # Set the dialog to save mode and specify the filter for JSON files
-        file_path, _ = file_dialog.getSaveFileName(
+        file_path, _ = QFileDialog().getSaveFileName(
             caption="Save Index JSON File",
             dir=proposed_filename,
             filter="JSON Files (*.json)"
         )
+        return file_path + '.json' if file_path and not file_path.endswith('.json') else file_path
 
-        # Check if a file path was selected
-        if file_path:
-            # If the user didn't specify the .json extension, add it
-            if not file_path.endswith('.json'):
-                file_path += '.json'
+    def _save_json_file(self, file_path: str, data: Dict[str, Any]):
+        try:
+            with open(file_path, 'w') as json_file:
+                json.dump(data, json_file, indent=4)
+            self.show_notification(f"Index JSON file saved to: {file_path}")
+        except Exception as e:
+            self.show_notification(f"Error saving JSON file: {str(e)}", warn=True)
+            print(f"Error saving JSON file: {str(e)}")
 
-            # Write the dictionary to the JSON file
-            try:
-                with open(file_path, 'w') as json_file:
-                    json.dump(all_data, json_file, indent=4)
-                self.show_notification(f"Index JSON file saved to: {file_path}")
-                return True
-            except Exception as e:
-                self.show_notification(f"Error saving JSON file: {str(e)}", warn=True)
-                print(f"Error saving JSON file: {str(e)}")
-                return False
-        else:
-            return False
-
-    def data(self):
+    def data(self) -> Dict[str, Any] | None:
         try:
             table_settings = self.index_table_container.data()
-
-        except Exception as e:
-            self.show_notification(f"Error: {str(e)}", warn=True)
-            return
-
-        try:
             resource_settings = self.index_table_container.resources_settings.data()
-
-        except Exception as e:
-            self.show_notification(f"Error: {str(e)}", warn=True)
-            return
-
-        try:
             user_settings = self.index_table_container.user_settings.data()
-
-        except Exception as e:
-            self.show_notification(f"Error: {str(e)}", warn=True)
-            return
-
-        try:
             kit_settings = self.index_table_container.index_kit_settings.data()
 
+            kit_type = resource_settings['kit_type']
+            kit_settings['kit_type'] = self.kit_type_obj[kit_type].data
+
+            return {
+                'user_info': user_settings,
+                'resource': resource_settings,
+                'index_kit': kit_settings,
+                'indexes': table_settings,
+            }
         except Exception as e:
             self.show_notification(f"Error: {str(e)}", warn=True)
-            return
-
-        kit_type = resource_settings['kit_type']
-        kit_settings['kit_type'] = self.kit_type_obj[kit_type].data
-
-        return {
-            'user_info': user_settings,
-            'resource': resource_settings,
-            'index_kit': kit_settings,
-            'indexes': table_settings,
-        }
+            return None
 
 
 # Subclass QMainWindow to customize your application's main window
@@ -207,19 +171,16 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.setWindowIcon(qta.icon('fa5b.jedi-order', color='blue'))
-
         self.setWindowTitle("index tool")
-        convert_widget = IndexDefinitionConverter()
-
-        # Set the central widget of the Window.
-        self.setCentralWidget(convert_widget)
+        self.setCentralWidget(IndexDefinitionConverter())
+        self.setMinimumSize(600, 600)
 
 
 def main():
     app = QApplication(sys.argv)
     qdarktheme.setup_theme("light")
     window = MainWindow()
-    window.setMinimumSize(600, 600)
+    # window.setMinimumSize(600, 600)
     window.show()
     sys.exit(app.exec())
 

@@ -1,202 +1,118 @@
 from pathlib import Path
-import json
-from io import StringIO
-
 import pandas as pd
 from camel_converter import to_snake
-
-kit_types = [
-    'fixed_single_index', 
-    'fixed_dual_index', 
-    'standard_pos_dual_index', 
-    'standard_pos_single_index', 
-    'standard_dual_index', 
-    'standard_single_index'
-]
+from io import StringIO
 
 
 class IlluminaFormatIndexKitDefinition:
-
-    def __init__(self, ilmn_index_file_path):
-
-        self.overridecycles_pattern = None
-        self.index_kit = None
-        self.supported_library_prep_kits = None
-        self.resources = None
-        self.indices_i7 = pd.DataFrame()
-        self.indices_i5 = pd.DataFrame
-        self.indices_dual_fixed = pd.DataFrame()
-        self.indices_single_fixed = pd.DataFrame()
-        self.index_import_error = None
-
-        self.indata = {}
-        self._ingest_index_file(ilmn_index_file_path)
-
+    def __init__(self, ilmn_index_file_path: Path):
+        self.indata = self._ingest_index_file(ilmn_index_file_path)
         self.index_kit = self.indata['index_kit']
         self.supported_library_prep_kits = self.indata['supported_library_prep_kits']
-
-        self.indices_i7 = self._get_i7_df()
-        self.indices_i5 = self._get_i5_df()
         self.resources = self._get_resources()
-        self.indices_dual_fixed = self._get_index_dual_fixed_df()
-        self.indices_single_fixed = self._get_index_single_fixed_df()
+        self.indices_i7 = self._get_index_df(1, "i7")
+        self.indices_i5 = self._get_index_df(2, "i5")
+        self.indices_dual_fixed = self._get_fixed_index_df("DualOnly")
+        self.indices_single_fixed = self._get_fixed_index_df("SingleOnly")
 
-    def _get_i7_df(self):
-        return (self.indata['indices'][self.indata['indices']['index_read_number'] == 1]
-         .copy()
-         .rename(columns={"name": "index_i7_name", "sequence": "index_i7"})
-         .drop(columns=['index_read_number'])
-         .reset_index(drop=True)
-         )
+    def _ingest_index_file(self, index_file: Path) -> dict:
+        sections = self._parse_sections(index_file)
+        return {
+            'index_kit': self._parse_index_kit(sections),
+            'supported_library_prep_kits': sections.get('SupportedLibraryPrepKits', []),
+            'resources': self._parse_resources(sections),
+            'indices': self._parse_indices(sections)
+        }
 
-    def _get_i5_df(self):
-        return (self.indata['indices'][self.indata['indices']['index_read_number'] == 2]
-                .copy()
-                .rename(columns={"name": "index_i5_name", "sequence": "index_i5"})
-                .drop(columns=['index_read_number'])
-                .reset_index(drop=True)
-                )
-
-    def _get_resources(self):
-        _other_resources = self.indata['resources'][
-            ~self.indata['resources']['type'].str.contains('FixedIndexPosition')].copy()
-        _other_resources['snake_name'] = _other_resources['name'].apply(to_snake)
-
-        return dict(zip(_other_resources['snake_name'], _other_resources['value']))
-
-    def _get_index_dual_fixed_df(self):
-        if self.index_kit['index_strategy'] == "DualOnly" and self.indata['resources']['type'].str.contains(
-                'FixedIndexPosition').any():
-            _idxs_dual_fix_ = self.indata['resources'][
-                self.indata['resources']['type'].str.contains('FixedIndexPosition')]
-
-            _idxs_dual_fix_ = _idxs_dual_fix_.rename(columns={'name': 'fixed_pos'})
-            _idxs_dual_fix_[['index_i7_name', 'index_i5_name']] = _idxs_dual_fix_['value'].str.split('-',
-                                                                                                     expand=True)
-            _idxs_dual_fix_ = _idxs_dual_fix_.drop(columns=['type', 'format', 'value']).reset_index(
-                drop=True)
-
-            return (_idxs_dual_fix_.merge(self.indices_i7, on='index_i7_name')
-                    .merge(self.indices_i5, on='index_i5_name')
-                    .copy())
-
-        else:
-            return pd.DataFrame()
-
-    def _get_index_single_fixed_df(self):
-        if self.index_kit['index_strategy'] == "SingleOnly" and self.indata['resources']['type'].str.contains(
-                'FixedIndexPosition').any():
-            _idxs_single_fix_ = self.indata['resources'][
-                self.indata['resources']['type'].str.contains('FixedIndexPosition')]
-
-            _idxs_single_fix_ = _idxs_single_fix_.rename(columns={'name': 'fixed_pos'})
-            _idxs_single_fix_['index_i7_name'] = _idxs_single_fix_['value']
-            _idxs_single_fix_ = _idxs_single_fix_.drop(columns=['type', 'format', 'value']).reset_index(
-                drop=True)
-
-            return _idxs_single_fix_.copy()
-
-        else:
-            return pd.DataFrame()
-
-    @property
-    def kit_type(self):
-        # kit_types = [
-        #     'fixed_single_index',
-        #     'fixed_dual_index',
-        #     'standard_pos_dual_index',
-        #     'standard_pos_single_index',
-        #     'standard_dual_index',
-        #     'standard_single_index'
-        # ]
-
-        if not self.indices_single_fixed.empty:
-            return 'fixed_single_index'
-
-        elif not self.indices_dual_fixed.empty:
-            return 'fixed_dual_index'
-
-        elif not self.indices_i7.empty and not self.indices_i5.empty:
-            return 'standard_dual_index'
-
-        elif not self.indices_i7.empty:
-            return 'standard_single_index'
-
-        else:
-            return None
-
-    @property
-    def indices_df(self):
-        print(self.indices_dual_fixed)
-        if not self.indices_dual_fixed.empty:
-            return self.indices_dual_fixed
-
-        elif not self.indices_i7.empty and not self.indices_i5.empty:
-            return pd.concat([self.indices_i7, self.indices_i5], axis=1)
-
-        elif not self.indices_i7.empty:
-            return self.indices_i7
-
-    def _ingest_index_file(self, index_file):
+    @staticmethod
+    def _parse_sections(index_file: Path) -> dict:
         sections = {}
         current_section = None
-
-        resources_orig_header = ["Name", "Type", "Format", "Value"]
-        resources_snake_header_dict = {x: to_snake(x) for x in resources_orig_header}
-        resources_snake_header = list(resources_snake_header_dict.values())
-
-        indices_orig_header = ["Name", "Sequence", "IndexReadNumber"]
-        indices_snake_header_dict = {x: to_snake(x) for x in indices_orig_header}
-        indices_snake_header = list(indices_snake_header_dict.values())
-
         content = index_file.read_text(encoding="utf-8")
 
         for line in content.splitlines():
             line = line.strip()
-
             if not line:
                 continue
-
             if line.startswith('[') and line.endswith(']'):
                 current_section = line[1:-1]
                 sections[current_section] = []
             else:
                 sections[current_section].append(line)
+        return sections
 
-        if 'IndexKit' in sections or 'Kit' in sections:
-            self.indata['index_kit'] = {to_snake(key): value for key, value in
-                                        (row.strip().split('\t') for row in sections['IndexKit'])}
+    @staticmethod
+    def _parse_index_kit(sections: dict) -> dict:
+        kit_section = sections.get('IndexKit') or sections.get('Kit', [])
+        return {to_snake(key): value for key, value in (row.strip().split('\t') for row in kit_section)}
 
-        if 'SupportedLibraryPrepKits' in sections:
-            self.indata['supported_library_prep_kits'] = [row.strip() for row in sections['SupportedLibraryPrepKits']]
+    @staticmethod
+    def _parse_resources(sections: dict) -> pd.DataFrame:
+        if 'Resources' not in sections:
+            return pd.DataFrame()
+        resources_content = '\n'.join(sections['Resources'])
+        df = pd.read_csv(StringIO(resources_content), sep='\t')
+        return df.rename(columns=lambda x: to_snake(x))
 
-        if 'Resources' in sections:
-            resources_content = '\n'.join(sections['Resources'])
+    @staticmethod
+    def _parse_indices(sections: dict) -> pd.DataFrame:
+        if 'Indices' not in sections:
+            return pd.DataFrame()
+        indices_content = '\n'.join(sections['Indices'])
+        df = pd.read_csv(StringIO(indices_content), sep='\t')
+        return df.rename(columns=lambda x: to_snake(x))
 
-            self.indata['resources'] = pd.read_csv(StringIO(resources_content), sep='\t', header=0)
-            self.indata['resources'] = self.indata['resources'].rename(columns=resources_snake_header_dict).copy()
-            self.indata['resources'] = self.indata['resources'][resources_snake_header].copy()
+    def _get_resources(self) -> dict:
+        other_resources = self.indata['resources'][
+            ~self.indata['resources']['type'].str.contains('FixedIndexPosition', na=False)
+        ].copy()
+        other_resources['snake_name'] = other_resources['name'].apply(to_snake)
+        return dict(zip(other_resources['snake_name'], other_resources['value']))
 
-        if 'Indices' in sections:
-            indexes_content = '\n'.join(sections['Indices'])
-            self.indata['indices'] = pd.read_csv(StringIO(indexes_content), sep='\t', header=0)
-            self.indata['indices'] = self.indata['indices'].rename(columns=indices_snake_header_dict).copy()
-            self.indata['indices'] = self.indata['indices'][indices_snake_header].copy()
+    def _get_index_df(self, index_read_number: int, index_type: str) -> pd.DataFrame:
+        return (self.indata['indices'][self.indata['indices']['index_read_number'] == index_read_number]
+                .rename(columns={"name": f"index_{index_type}_name", "sequence": f"index_{index_type}"})
+                .drop(columns=['index_read_number'])
+                .reset_index(drop=True))
 
-    # def _make_output_dict(self):
-    #     return {
-    #         'index_kit': self.index_kit,
-    #         'resources': self.resources,
-    #         'indices_i7': self._df_to_json_compat(self.indices_i7),
-    #         'indices_i5': self._df_to_json_compat(self.indices_i5),
-    #         'indices_dual_fixed': self._df_to_json_compat(self.indices_dual_fixed),
-    #         'supported_library_prep_kits': self.supported_library_prep_kits,
-    #     }
-    #
-    # @staticmethod
-    # def _df_to_json_compat(data):
-    #     if isinstance(data, pd.DataFrame):
-    #         return data.to_dict(orient='records')
-    #     if data is None:
-    #         return pd.DataFrame().to_dict(orient='records')
+    def _get_fixed_index_df(self, strategy: str) -> pd.DataFrame:
+        if self.index_kit['index_strategy'] != strategy or not self.indata['resources']['type'].str.contains(
+                'FixedIndexPosition', na=False).any():
+            return pd.DataFrame()
 
+        fixed_indices = self.indata['resources'][
+            self.indata['resources']['type'].str.contains('FixedIndexPosition', na=False)
+        ].rename(columns={'name': 'fixed_pos'})
+
+        if strategy == "DualOnly":
+            fixed_indices[['index_i7_name', 'index_i5_name']] = fixed_indices['value'].str.split('-', expand=True)
+            return (fixed_indices.drop(columns=['type', 'format', 'value'])
+                    .merge(self.indices_i7, on='index_i7_name')
+                    .merge(self.indices_i5, on='index_i5_name'))
+        else:  # SingleOnly
+            fixed_indices['index_i7_name'] = fixed_indices['value']
+            return fixed_indices.drop(columns=['type', 'format', 'value'])
+
+    @property
+    def kit_type(self) -> str:
+        if not self.indices_single_fixed.empty:
+            return 'fixed_single_index'
+        elif not self.indices_dual_fixed.empty:
+            return 'fixed_dual_index'
+        elif not self.indices_i7.empty and not self.indices_i5.empty:
+            return 'standard_dual_index'
+        elif not self.indices_i7.empty:
+            return 'standard_single_index'
+        else:
+            return None
+
+    @property
+    def indices_df(self) -> pd.DataFrame:
+        if not self.indices_dual_fixed.empty:
+            return self.indices_dual_fixed
+        elif not self.indices_i7.empty and not self.indices_i5.empty:
+            return pd.concat([self.indices_i7, self.indices_i5], axis=1)
+        elif not self.indices_i7.empty:
+            return self.indices_i7
+        else:
+            return pd.DataFrame()
