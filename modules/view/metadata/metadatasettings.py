@@ -3,7 +3,7 @@ from PySide6.QtGui import QValidator
 from PySide6.QtWidgets import QLineEdit, QComboBox, QFormLayout, QGroupBox
 from typing import Dict, Union
 
-class IndexKitSettings(QGroupBox):
+class MetaDataSettingsWidget(QGroupBox):
     def __init__(self):
         super().__init__()
         self.setTitle("Index Kit Settings")
@@ -24,13 +24,15 @@ class IndexKitSettings(QGroupBox):
 
         self.setLayout(layout)
 
-    def _create_name_input(self) -> QLineEdit:
+    @staticmethod
+    def _create_name_input() -> QLineEdit:
         name_input = QLineEdit()
         name_input.setPlaceholderText("Enter name with no whitespace (e.g., GMS560_Index_Kit)")
         name_input.setValidator(NameValidator(name_input))
         return name_input
 
-    def _create_version_input(self) -> QLineEdit:
+    @staticmethod
+    def _create_version_input() -> QLineEdit:
         version_input = QLineEdit()
         version_input.setPlaceholderText("Enter version (e.g., 1.2.3)")
         version_input.setValidator(VersionValidator(version_input))

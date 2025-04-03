@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'widget.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.7.2
+## Created by: Qt User Interface Compiler version 6.8.2
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -126,7 +126,7 @@ class Ui_Form(object):
         Form.setWindowTitle(QCoreApplication.translate("Form", u"Form", None))
         self.groupBox.setTitle(QCoreApplication.translate("Form", u"Data source", None))
         self.csv_radioButton.setText(QCoreApplication.translate("Form", u"csv", None))
-        self.ilmn_radioButton.setText(QCoreApplication.translate("Form", u"ilmn index tsv", None))
+        self.ilmn_radioButton.setText(QCoreApplication.translate("Form", u"tsv (Illumina index file)", None))
         self.load_pushButton.setText(QCoreApplication.translate("Form", u"Load source", None))
         self.export_pushButton.setText(QCoreApplication.translate("Form", u"Export json", None))
         self.unhide_pushButton.setText(QCoreApplication.translate("Form", u"Unhide cols", None))

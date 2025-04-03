@@ -3,12 +3,19 @@ from PySide6.QtGui import QValidator
 from PySide6.QtWidgets import (QGroupBox, QFormLayout, QLineEdit, QComboBox,
                                QHBoxLayout, QLabel, QWidget)
 
+from modules.model.configuration_manager import ConfigurationManager
+from modules.view.draggable_labels.draggable_labels import DraggableLabelsContainer
 
-class ResourcesSettings(QGroupBox):
-    def __init__(self, kit_type_fields: dict):
+
+class AdaptersOverrideCyclesWidget(QGroupBox):
+    def __init__(self, configuration_manager: ConfigurationManager, draggable_labels_widget: DraggableLabelsContainer):
         super().__init__("Resources Settings")
+
+        self._draggable_labels_widget = draggable_labels_widget
+        self._configuration_manager = configuration_manager
+
         self.setFixedWidth(500)
-        self.kit_type_fields = kit_type_fields
+        self.widgets = None
         self.setup_ui()
 
     def setup_ui(self):
@@ -23,7 +30,7 @@ class ResourcesSettings(QGroupBox):
             'override_cycles_pattern_r2': QLineEdit(),
         }
 
-        self.widgets['kit_type'].addItems(list(self.kit_type_fields))
+        self.widgets['kit_type'].addItems(list(self._configuration_manager.kit_type_definition_data.keys()))
 
         override_layout = QHBoxLayout()
         override_h_layout = QHBoxLayout()
@@ -46,6 +53,11 @@ class ResourcesSettings(QGroupBox):
         layout.addRow("override cycles pattern", override_widget)
 
         self.set_validators()
+
+    # @property
+    # def current_kit_def_obj_name(self):
+    #     return self.kit_def_objs_dict[self.widgets['kit_type'].currentText()]
+
 
     def set_validators(self):
         self.widgets['adapter_read1'].setValidator(AdapterValidator())
@@ -93,14 +105,14 @@ class BaseValidator(QValidator):
 
 
 class IndexValidator(BaseValidator):
-    regex = QRegularExpression(r'^(?!.*x.*x)([IUN](?:\d+|x))+$')
+    regex = QRegularExpression(r'^(?!.*{i}.*{i})([IUN](?:\d+|{i}))+$')
 
     def __init__(self, parent=None):
         super().__init__(self.regex.pattern(), parent)
 
 
 class ReadValidator(BaseValidator):
-    regex = QRegularExpression(r'^(?!.*x.*x)([YUN](?:\d+|x))+$')
+    regex = QRegularExpression(r'^(?!.*{r}.*{r})([YUN](?:\d+|{r}))+$')
 
     def __init__(self, parent=None):
         super().__init__(self.regex.pattern(), parent)

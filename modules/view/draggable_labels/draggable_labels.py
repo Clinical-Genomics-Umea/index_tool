@@ -3,28 +3,30 @@ from PySide6.QtGui import QDrag
 from PySide6.QtWidgets import (QVBoxLayout, QWidget, QHBoxLayout, QSizePolicy,
                                QSpacerItem, QLabel, QGroupBox)
 
+from modules.model.configuration_manager import ConfigurationManager
+
 
 class DraggableLabelsContainer(QGroupBox):
-    def __init__(self, kit_type_fields):
+    def __init__(self, configuration_manager: ConfigurationManager):
         super().__init__("Draggable Header Labels")
-        self.kit_type_fields = kit_type_fields
-        self.setup_ui()
-
-    def setup_ui(self):
+        self._configuration_manager = configuration_manager
         self.setFixedWidth(1006)
         self.layout = QVBoxLayout(self)
         self.kit_type_label_widgets = {}
 
-        for kit_type_name, kit_object in self.kit_type_fields.items():
-            widget = self.create_kit_type_widget(kit_object.fields)
+        self._setup()
+
+    def _setup(self):
+
+        for kit_type_name, kit_object in self._configuration_manager.kit_type_definition_data.items():
+            widget = self._create_kit_type_widget(kit_object.all_index_set_fields)
             self.kit_type_label_widgets[kit_type_name] = widget
             self.layout.addWidget(widget)
 
-        first_key = next(iter(self.kit_type_fields))
-        self.selected_kit_type_labels = set(self.kit_type_fields[first_key].fields)
+        first_key = list(self.kit_type_label_widgets.keys())[0]
         self.show_labels(first_key)
 
-    def create_kit_type_widget(self, fields):
+    def _create_kit_type_widget(self, fields):
         widget = QWidget()
         widget.setFixedWidth(1006)
         layout = QHBoxLayout(widget)

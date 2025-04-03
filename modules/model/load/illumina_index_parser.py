@@ -4,16 +4,23 @@ from camel_converter import to_snake
 from io import StringIO
 
 
-class IlluminaFormatIndexKitDefinition:
-    def __init__(self, ilmn_index_file_path: Path):
-        self.indata = self._ingest_index_file(ilmn_index_file_path)
-        self.index_kit = self.indata['index_kit']
-        self.supported_library_prep_kits = self.indata['supported_library_prep_kits']
-        self.resources = self._get_resources()
-        self.indices_i7 = self._get_index_df(1, "i7")
-        self.indices_i5 = self._get_index_df(2, "i5")
-        self.indices_dual_fixed = self._get_fixed_index_df("DualOnly")
-        self.indices_single_fixed = self._get_fixed_index_df("SingleOnly")
+class IlluminaIndexKitParser:
+    def __init__(self):
+       pass
+
+    def parse(self, file_path: Path):
+        indata = self._ingest_index_file(file_path)
+        index_kit = indata['index_kit']
+        supported_library_prep_kits = indata['supported_library_prep_kits']
+        resources = self._get_resources()
+        indices_i7 = self._get_index_df(1, "i7")
+        indices_i5 = self._get_index_df(2, "i5")
+        indices_dual_fixed = self._get_fixed_index_df("DualOnly")
+        indices_single_fixed = self._get_fixed_index_df("SingleOnly")
+
+
+
+
 
     def _ingest_index_file(self, index_file: Path) -> dict:
         sections = self._parse_sections(index_file)
@@ -62,9 +69,9 @@ class IlluminaFormatIndexKitDefinition:
         df = pd.read_csv(StringIO(indices_content), sep='\t')
         return df.rename(columns=lambda x: to_snake(x))
 
-    def _get_resources(self) -> dict:
-        other_resources = self.indata['resources'][
-            ~self.indata['resources']['type'].str.contains('FixedIndexPosition', na=False)
+    def _get_resources(self, indata) -> dict:
+        other_resources = indata['resources'][
+            ~indata['resources']['type'].str.contains('FixedIndexPosition', na=False)
         ].copy()
         other_resources['snake_name'] = other_resources['name'].apply(to_snake)
         return dict(zip(other_resources['snake_name'], other_resources['value']))
@@ -82,7 +89,7 @@ class IlluminaFormatIndexKitDefinition:
 
         fixed_indices = self.indata['resources'][
             self.indata['resources']['type'].str.contains('FixedIndexPosition', na=False)
-        ].rename(columns={'name': 'fixed_pos'})
+        ].rename(columns={'name': 'well'})
 
         if strategy == "DualOnly":
             fixed_indices[['index_i7_name', 'index_i5_name']] = fixed_indices['value'].str.split('-', expand=True)

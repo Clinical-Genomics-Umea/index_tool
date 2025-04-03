@@ -35,7 +35,7 @@
            <item>
             <widget class="QRadioButton" name="ilmn_radioButton">
              <property name="text">
-              <string>ilmn index tsv</string>
+              <string>tsv (Illumina index file)</string>
              </property>
             </widget>
            </item>
