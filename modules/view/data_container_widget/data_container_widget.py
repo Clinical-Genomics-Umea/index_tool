@@ -4,34 +4,38 @@ from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QSpacerItem, QSizePolicy, \
     QTableWidgetItem
 
-from modules.model.configuration_manager import ConfigurationManager
+from modules.model.data_manager import DataManager
 from modules.view.draggable_labels.draggable_labels import DraggableLabelsContainer
-from modules.view.metadata.metadatasettings import MetaDataSettingsWidget
+from modules.view.metadata.index_kit_settings.index_kit_settings_widget import IndexKitSettingsWidget
 from modules.view.index_table.droppable_table import DroppableTableWidget
-from modules.view.metadata.adapters_override_cycles_widget import AdaptersOverrideCyclesWidget
-from modules.view.metadata.user import UserInfo
+from modules.view.metadata.resource_settings.resource_settings_widget import ResourceSettingsWidget
+from modules.view.metadata.user_settings.user_settings_widget import UserSettingsWidget
 from typing import Dict, Any, List
 
 
 class DataContainerWidget(QWidget):
     notify_signal = Signal(str, bool)
 
-    def __init__(self, configuration_manager: ConfigurationManager,
+    def __init__(self,
+                 data_manager: DataManager,
                  droppable_table_widget: DroppableTableWidget,
-                 resources_settings_widget: AdaptersOverrideCyclesWidget,
-                 draggable_labels_container_widget: DraggableLabelsContainer):
+                 resources_settings_widget: ResourceSettingsWidget,
+                 draggable_labels_container_widget: DraggableLabelsContainer,
+                 user_settings_widget: UserSettingsWidget,
+                 metadata_settings_widget: IndexKitSettingsWidget):
 
         super().__init__()
 
+        self._data_manager = data_manager
         self._draggable_labels_container_widget = draggable_labels_container_widget
         self._resources_settings_widget = resources_settings_widget
         self._droppable_table_widget = droppable_table_widget
         self._tablewidget_h_header = self._droppable_table_widget.horizontalHeader()
-
-        self._configuration_manager = configuration_manager
+        self._user_settings_widget = user_settings_widget
+        self._metadata_settings_widget = metadata_settings_widget
 
         self._setup_ui()
-        self._connect_signals()
+        # self._connect_signals()
 
     def _setup_ui(self):
         self.setAcceptDrops(True)
@@ -40,22 +44,19 @@ class DataContainerWidget(QWidget):
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.layout)
 
-        self.user_settings = UserInfo()
-        self.index_kit_settings = MetaDataSettingsWidget()
+        self._input_settings_layout = QHBoxLayout()
+        self._input_settings_layout.addWidget(self._metadata_settings_widget)
+        self._input_settings_layout.addWidget(self._resources_settings_widget)
+        self._input_settings_layout.addSpacerItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
 
-        self.input_settings_layout = QHBoxLayout()
-        self.input_settings_layout.addWidget(self.index_kit_settings)
-        self.input_settings_layout.addWidget(self._resources_settings_widget)
-        self.input_settings_layout.addSpacerItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
-
-        self.layout.addWidget(self.user_settings)
-        self.layout.addLayout(self.input_settings_layout)
+        self.layout.addWidget(self._user_settings_widget)
+        self.layout.addLayout(self._input_settings_layout)
         self.layout.addWidget(self._draggable_labels_container_widget)
         self.layout.addWidget(self._droppable_table_widget)
 
-    def _connect_signals(self):
-        self._resources_settings_widget.widgets['kit_type'].currentTextChanged.connect(self.set_draggable_layout)
-        self._tablewidget_h_header.label_dropped.connect(self._override_cycles_autoset_label)
+    def _update_data(self):
+        self._data_manager.set_index_df(self._droppable_table_widget.to_dataframe())
+        self._data_manager.set_user(self._user_settings_widget.get_user_info())
 
     def illumina_set_parameters(self, ikd: Dict[str, Any]):
         self._resources_settings_widget.set_layout_illumina(ikd.kit_type)
@@ -133,7 +134,7 @@ class DataContainerWidget(QWidget):
 
     def current_labels(self) -> List[str]:
         current_kit_type_name = self._resources_settings_widget.widgets['kit_type'].currentText()
-        return self._configuration_manager[current_kit_type_name].all_index_set_fields
+        return self._data_manager[current_kit_type_name].all_index_set_fields
 
     def data(self, index_kit_def_name: str) -> Dict[str, Any]:
         df = self._droppable_table_widget.to_dataframe()
@@ -156,8 +157,8 @@ class DataContainerWidget(QWidget):
         for i in range(df.shape[0]):
             for j in range(df.shape[1]):
                 self._droppable_table_widget.setItem(i, j, QTableWidgetItem(str(df.iat[i, j])))
-
-    def set_draggable_layout(self):
-        text = self._resources_settings_widget.widgets['kit_type'].currentText()
-        self._draggable_labels_container_widget.show_labels(text)
+    #
+    # def set_draggable_layout(self):
+    #     text = self._resources_settings_widget.currentText()
+    #     self._draggable_labels_container_widget.show_labels(text)
 

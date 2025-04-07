@@ -1,26 +1,35 @@
+from logging import Logger
+
 from PySide6.QtCore import QRegularExpression
 from PySide6.QtGui import QValidator
 from PySide6.QtWidgets import QLineEdit, QComboBox, QFormLayout, QGroupBox
 from typing import Dict, Union
 
-class MetaDataSettingsWidget(QGroupBox):
-    def __init__(self):
+from modules.model.data_manager import DataManager
+
+
+class IndexKitSettingsWidget(QGroupBox):
+    def __init__(self, data_manager: DataManager, logger: Logger):
         super().__init__()
         self.setTitle("Index Kit Settings")
         self.setFixedWidth(500)
+        self._data_manager = data_manager
+        self._logger = logger
+
+        self._name = self._create_name_input()
+        self._display_name = QLineEdit()
+        self._version = self._create_version_input()
+        self._description = QLineEdit()
+
         self._setup_ui()
 
     def _setup_ui(self):
-        layout = QFormLayout()
-        self.widgets: Dict[str, Union[QLineEdit, QComboBox]] = {
-            "name": self._create_name_input(),
-            "display_name": QLineEdit(),
-            'version': self._create_version_input(),
-            'description': QLineEdit(),
-        }
 
-        for name, widget in self.widgets.items():
-            layout.addRow(name, widget)
+        layout = QFormLayout()
+        layout.addRow("name", self._name)
+        layout.addRow("display name", self._display_name)
+        layout.addRow("version", self._version)
+        layout.addRow("description", self._description)
 
         self.setLayout(layout)
 

@@ -4,16 +4,40 @@ import numpy as np
 import pandas as pd
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QAction, Qt
-from PySide6.QtWidgets import QTableWidget, QHeaderView, QMenu
+from PySide6.QtWidgets import QTableWidget, QHeaderView, QMenu, QTableWidgetItem
 
+from modules.model.data_manager import DataManager
 from modules.model.kit_type import KitDefObject
 
 
 class DroppableTableWidget(QTableWidget):
-    def __init__(self, rows, columns, parent=None):
+    def __init__(self, rows, columns, data_manager: DataManager, parent=None):
         super().__init__(rows, columns, parent)
-        self.setHorizontalHeader(DroppableHeader(Qt.Horizontal, self))
+
+        self._data_manager = data_manager
+
+        self._droppable_header = DroppableHeader(Qt.Horizontal, self)
+        self.setHorizontalHeader(self._droppable_header)
         self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+
+        self._droppable_header.header_labels_changed.connect(self._save_index_table_widget_data)
+
+    def _save_index_table_widget_data(self):
+
+        df = self.to_dataframe()
+        self._data_manager.set_index_df(df)
+
+    def set_index_table_widget_data(self):
+        df = self._data_manager.index_df
+
+        df = df.dropna(axis=1, how='all').loc[:, (df != '').any()]
+        self.setRowCount(df.shape[0])
+        self.setColumnCount(df.shape[1])
+        self.setHorizontalHeaderLabels(df.columns)
+
+        for i in range(df.shape[0]):
+            for j in range(df.shape[1]):
+                self.setItem(i, j, QTableWidgetItem(str(df.iat[i, j])))
 
     def contextMenuEvent(self, event):
         header_index = self.horizontalHeader().logicalIndexAt(event.pos())
@@ -67,7 +91,7 @@ class DroppableTableWidget(QTableWidget):
 
 
 class DroppableHeader(QHeaderView):
-    label_dropped = Signal(int, str)
+    header_labels_changed = Signal()
 
     def __init__(self, orientation, parent=None):
         super().__init__(orientation, parent)
@@ -100,7 +124,7 @@ class DroppableHeader(QHeaderView):
             event.acceptProposedAction()
 
             if old_label != new_label:
-                self.label_dropped.emit(index, new_label)
+                self.header_labels_changed.emit()
 
     def header_labels(self) -> List[str]:
         return [self.model().headerData(section, self.orientation(), Qt.DisplayRole) for section in range(self.count())]
@@ -108,11 +132,13 @@ class DroppableHeader(QHeaderView):
     def restore_orig_header(self):
         for index, label in self.original_labels.items():
             self.model().setHeaderData(index, Qt.Horizontal, label)
+            self.header_labels_changed.emit()
 
     def restore_orig_header_for_index(self, index: int):
         old_label = self.original_labels.pop(index, None)
         if old_label:
             self.model().setHeaderData(index, Qt.Horizontal, old_label)
+            self.header_labels_changed.emit()
 
     def restore_orig_header_for_label(self, label: str):
         index = self.find_header_index(label)
