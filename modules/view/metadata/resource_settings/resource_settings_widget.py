@@ -26,8 +26,32 @@ class ResourceSettingsWidget(QGroupBox):
         self.setFixedWidth(500)
         self._setup()
 
-        self._kit_type_name_combobox.currentTextChanged.connect(self._set_selected_kit_type_name)
+        self._kit_type_name_combobox.currentTextChanged.connect(self._save_selected_kit_type_name)
 
+        self._adapter_read1_lineedit.textChanged.connect(self._save_adapter_read1)
+        self._adapter_read2_lineedit.textChanged.connect(self._save_adapter_read2)
+        self._override_cycles_pattern_r1_lineedit.textChanged.connect(self._save_override_cycles_pattern_r1)
+        self._override_cycles_pattern_i1_lineedit.textChanged.connect(self._save_override_cycles_pattern_i1)
+        self._override_cycles_pattern_i2_lineedit.textChanged.connect(self._save_override_cycles_pattern_i2)
+        self._override_cycles_pattern_r2_lineedit.textChanged.connect(self._save_override_cycles_pattern_r2)
+
+    def _save_adapter_read1(self):
+        self._data_manager.set_adapter_read_1(self._adapter_read1_lineedit.text())
+
+    def _save_adapter_read2(self):
+        self._data_manager.set_adapter_read_2(self._adapter_read2_lineedit.text())
+
+    def _save_override_cycles_pattern_r1(self):
+        self._data_manager.set_oc_read1(self._override_cycles_pattern_r1_lineedit.text())
+
+    def _save_override_cycles_pattern_i1(self):
+        self._data_manager.set_oc_index1(self._override_cycles_pattern_i1_lineedit.text())
+
+    def _save_override_cycles_pattern_i2(self):
+        self._data_manager.set_oc_index2(self._override_cycles_pattern_i2_lineedit.text())
+
+    def _save_override_cycles_pattern_r2(self):
+        self._data_manager.set_oc_read2(self._override_cycles_pattern_r2_lineedit.text())
 
     def _setup(self):
         form_layout = QFormLayout(self)
@@ -49,7 +73,7 @@ class ResourceSettingsWidget(QGroupBox):
         form_layout.addRow("", override_header_layout)
         form_layout.addRow("override cycles pattern", override_lineedit_layout)
 
-        self._set_selected_kit_type_name()
+        self._save_selected_kit_type_name()
         self.set_validators()
 
         self._adapter_read1_lineedit.textChanged.connect(self.on_adapter_read1_lineedit_change)
@@ -87,7 +111,7 @@ class ResourceSettingsWidget(QGroupBox):
     def set_override_cycles_pattern_r2_lineedit(self, value):
         self._override_cycles_pattern_r2_lineedit.setText(value)
 
-    def _set_selected_kit_type_name(self):
+    def _save_selected_kit_type_name(self):
         self._data_manager.set_selected_kit_type_name(self._kit_type_name_combobox.currentText())
 
     def on_adapter_read1_lineedit_change(self):

@@ -1,14 +1,11 @@
 from logging import Logger
 from pathlib import Path
-from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QGroupBox, QFormLayout, QLineEdit, QHBoxLayout, QVBoxLayout
 
 from modules.model.data_manager import DataManager
 
 
 class UserSettingsWidget(QGroupBox):
-
-    user_changed = Signal(str)
 
     def __init__(self, data_manager: DataManager, logger: Logger):
         super().__init__("User settings")
@@ -26,7 +23,19 @@ class UserSettingsWidget(QGroupBox):
 
         self._setup_ui()
 
-        self._user_lineedit.textChanged.connect(self.user_changed)
+        self._user_lineedit.textChanged.connect(self._save_user)
+        self._ad_user_lineedit.textChanged.connect(self._save_ad_user)
+        self._source_filepath_lineedit.textChanged.connect(self._save_source_filepath)
+
+
+    def _save_user(self):
+        self._data_manager.set_user(self._user_lineedit.text())
+
+    def _save_ad_user(self):
+        self._data_manager.set_ad_user(self._ad_user_lineedit.text())
+
+    def _save_source_filepath(self):
+        self._data_manager.set_source_filepath(self._source_filepath_lineedit.text())
 
 
     def _setup_ui(self):

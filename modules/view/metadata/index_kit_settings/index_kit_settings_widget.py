@@ -23,6 +23,23 @@ class IndexKitSettingsWidget(QGroupBox):
 
         self._setup_ui()
 
+        self._name.textChanged.connect(self._save_name)
+        self._display_name.textChanged.connect(self._save_display_name)
+        self._version.textChanged.connect(self._save_version)
+        self._description.textChanged.connect(self._save_description)
+
+    def _save_name(self):
+        self._data_manager.set_kit_name(self._name.text())
+
+    def _save_display_name(self):
+        self._data_manager.set_display_name(self._display_name.text())
+
+    def _save_version(self):
+        self._data_manager.set_version(self._version.text())
+
+    def _save_description(self):
+        self._data_manager.set_description(self._description.text())
+
     def _setup_ui(self):
 
         layout = QFormLayout()

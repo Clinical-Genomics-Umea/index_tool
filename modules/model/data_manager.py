@@ -13,28 +13,27 @@ from modules.model.load.csvloader import CsvLoader
 
 class DataManager(QObject):
 
-    user_changed = Signal(str)
-    ad_user_changed = Signal(str)
-    source_filepath_changed = Signal(str)
+    user_changed = Signal()
+    ad_user_changed = Signal()
+    source_filepath_changed = Signal()
 
     # Kit settings
-    kit_name_changed = Signal(str)
-    display_name_changed = Signal(str)
-    version_changed = Signal(str)
-    description_changed = Signal(str)
+    kit_name_changed = Signal()
+    display_name_changed = Signal()
+    version_changed = Signal()
+    description_changed = Signal()
 
     # Resources
-    adapter_read_1_changed = Signal(str)
-    adapter_read_2_changed = Signal(str)
-    kit_type_changed = Signal(str)
-    oc_read1_changed = Signal(str)
-    oc_read2_changed = Signal(str)
-    oc_index1_changed = Signal(str)
-    oc_index2_changed = Signal(str)
+    adapter_read_1_changed = Signal()
+    adapter_read_2_changed = Signal()
+    selected_kit_type_name_changed = Signal()
+    oc_read1_changed = Signal()
+    oc_read2_changed = Signal()
+    oc_index1_changed = Signal()
+    oc_index2_changed = Signal()
 
     # Table
     index_df_changed = Signal()
-    selected_kit_type_name_changed = Signal()
 
     init_done = Signal()
 
@@ -70,6 +69,8 @@ class DataManager(QObject):
 
         self._selected_kit_type_name = None
 
+        self._kit_type_list = None
+
         self._init_settings()
 
     def set_index_df_from_path(self, path: Path):
@@ -94,8 +95,6 @@ class DataManager(QObject):
         if self._index_df.equals(df):
             return
 
-        print("set_index_df")
-
         self._index_df = df
         self.index_df_changed.emit()
 
@@ -104,21 +103,21 @@ class DataManager(QObject):
             return
 
         self._user = user
-        self.user_changed.emit(user)
+        self.user_changed.emit()
 
     def set_source_filepath(self, path: str):
         if self._source_filepath == path:
             return
 
         self._source_filepath = path
-        self.source_filepath_changed.emit(path)
+        self.source_filepath_changed.emit()
 
     def set_ad_user(self, ad_user: str):
         if self._ad_user == ad_user:
             return
 
         self._ad_user = ad_user
-        self.ad_user_changed.emit(ad_user)
+        self.ad_user_changed.emit()
 
     def set_kit_name(self, kit_name):
         if self._kit_name == kit_name:
@@ -132,42 +131,42 @@ class DataManager(QObject):
             return
 
         self._display_name = display_name
-        self.display_name_changed.emit(display_name)
+        self.display_name_changed.emit()
 
     def set_version(self, version):
         if self._version == version:
             return
 
         self._version = version
-        self.version_changed.emit(version)
+        self.version_changed.emit()
 
     def set_description(self, description):
         if self._description == description:
             return
 
         self._description = description
-        self.description_changed.emit(description)
+        self.description_changed.emit()
 
     def set_adapter_read_1(self, adapter_read_1):
         if self._adapter_read_1 == adapter_read_1:
             return
 
         self._adapter_read_1 = adapter_read_1
-        self.adapter_read_1_changed.emit(adapter_read_1)
+        self.adapter_read_1_changed.emit()
 
     def set_adapter_read_2(self, adapter_read_2):
         if self._adapter_read_2 == adapter_read_2:
             return
 
         self._adapter_read_2 = adapter_read_2
-        self.adapter_read_2_changed.emit(adapter_read_2)
+        self.adapter_read_2_changed.emit()
 
     def set_kit_type(self, kit_type):
         if self._kit_type == kit_type:
             return
 
         self._kit_type = kit_type
-        self.kit_type_changed.emit(kit_type)
+        self.selected_kit_type_name_changed.emit()
 
     def set_kit_type_list(self, kit_list):
         self._kit_type_list = kit_list
@@ -178,28 +177,28 @@ class DataManager(QObject):
             return
 
         self._oc_read1 = oc_read1
-        self.oc_read1_changed.emit(oc_read1)
+        self.oc_read1_changed.emit()
 
     def set_oc_read2(self, oc_read2):
         if self._oc_read2 == oc_read2:
             return
 
         self._oc_read2 = oc_read2
-        self.oc_read2_changed.emit(oc_read2)
+        self.oc_read2_changed.emit()
 
     def set_oc_index1(self, oc_index1):
         if self._oc_index1 == oc_index1:
             return
 
         self._oc_index1 = oc_index1
-        self.oc_index1_changed.emit(oc_index1)
+        self.oc_index1_changed.emit()
 
     def set_oc_index2(self, oc_index2):
         if self._oc_index2 == oc_index2:
             return
 
         self._oc_index2 = oc_index2
-        self.oc_index2_changed.emit(oc_index2)
+        self.oc_index2_changed.emit()
 
     @property
     def index_df(self):
