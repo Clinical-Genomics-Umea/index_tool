@@ -7,7 +7,7 @@ from PySide6.QtGui import QAction, Qt
 from PySide6.QtWidgets import QTableWidget, QHeaderView, QMenu, QTableWidgetItem
 
 from modules.model.data_manager import DataManager
-from modules.model.kit_type import KitDefObject
+from modules.model.config_object import ConfigObject
 
 
 class DroppableTableWidget(QTableWidget):
@@ -71,19 +71,19 @@ class DroppableTableWidget(QTableWidget):
 
         return pd.DataFrame(data)
 
-    def index_sets_dict(self, index_kit_def_obj: KitDefObject) -> Dict[str, List[Dict[str, Any]]]:
+    def index_sets_dict(self, index_kit_def_obj: ConfigObject) -> Dict[str, List[Dict[str, Any]]]:
 
-        fields = index_kit_def_obj.all_index_set_fields
+        fields = index_kit_def_obj.all_index_fields
 
         df = self.to_dataframe()
         _df = df[fields].copy().replace(['nan', ''], np.nan).dropna(how='all')
         if _df.isnull().any().any():
-            raise ValueError(f"Error: NaN values in the index table for {index_kit_def_obj.kit_name}")
+            raise ValueError(f"Error: NaN values in the index table for {index_kit_def_obj.config_type_name}")
 
         index_sets_dict = {}
 
         for index_set_name in index_kit_def_obj.index_set_names:
-            index_set_fields = index_kit_def_obj.index_set_fields(index_set_name)
+            index_set_fields = index_kit_def_obj.index_set_fields_by_name(index_set_name)
             _df2 = _df[index_set_fields]
             index_sets_dict[index_set_name] = _df2.to_dict(orient='records')
 

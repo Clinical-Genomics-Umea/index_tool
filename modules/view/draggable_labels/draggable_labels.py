@@ -21,8 +21,8 @@ class DraggableLabelsContainer(QGroupBox):
 
     def _setup(self):
 
-        for kit_type_name, kit_object in self._data_manager.kit_type_definition_data.items():
-            kit_fields_widget = self._create_kit_fields_widget(kit_object.all_index_set_fields)
+        for kit_type_name, kit_object in self._data_manager.config_definition_data.items():
+            kit_fields_widget = self._create_kit_fields_widget(kit_object.all_index_fields)
             self.kit_type_label_widgets[kit_type_name] = kit_fields_widget
             self.layout.addWidget(kit_fields_widget)
             print("draggable_labels_container", kit_type_name)

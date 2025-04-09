@@ -134,7 +134,7 @@ class DataContainerWidget(QWidget):
 
     def current_labels(self) -> List[str]:
         current_kit_type_name = self._resources_settings_widget.widgets['kit_type'].currentText()
-        return self._data_manager[current_kit_type_name].all_index_set_fields
+        return self._data_manager[current_kit_type_name].all_index_fields
 
     def data(self, index_kit_def_name: str) -> Dict[str, Any]:
         df = self._droppable_table_widget.to_dataframe()

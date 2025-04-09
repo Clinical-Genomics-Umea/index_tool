@@ -37,7 +37,6 @@ class UserSettingsWidget(QGroupBox):
     def _save_source_filepath(self):
         self._data_manager.set_source_filepath(self._source_filepath_lineedit.text())
 
-
     def _setup_ui(self):
 
         layout_v = QVBoxLayout(self)
@@ -60,14 +59,15 @@ class UserSettingsWidget(QGroupBox):
 
         self.setLayout(layout_v)
 
-    def set_source_filepath(self, filepath):
+    def set_source_filepath(self):
+        filepath = self._data_manager.source_filepath
         self._source_filepath_lineedit.setText(str(filepath))
 
     def set_user(self, user: str):
         self._user_lineedit.setText(user)
 
-    def set_ad_user(self, user: str):
-        self._ad_user_lineedit.setText(user)
+    def set_ad_user(self):
+        self._ad_user_lineedit.setText(self._data_manager.ad_user)
 
     @property
     def source_filepath(self):

@@ -17,7 +17,7 @@ class ResourceSettingsWidget(QGroupBox):
 
         self._adapter_read1_lineedit = QLineEdit()
         self._adapter_read2_lineedit = QLineEdit()
-        self._kit_type_name_combobox = QComboBox()
+        self._config_type_name_combobox = QComboBox()
         self._override_cycles_pattern_r1_lineedit = QLineEdit()
         self._override_cycles_pattern_i1_lineedit = QLineEdit()
         self._override_cycles_pattern_i2_lineedit = QLineEdit()
@@ -26,7 +26,7 @@ class ResourceSettingsWidget(QGroupBox):
         self.setFixedWidth(500)
         self._setup()
 
-        self._kit_type_name_combobox.currentTextChanged.connect(self._save_selected_kit_type_name)
+        self._config_type_name_combobox.currentTextChanged.connect(self._save_selected_kit_type_name)
 
         self._adapter_read1_lineedit.textChanged.connect(self._save_adapter_read1)
         self._adapter_read2_lineedit.textChanged.connect(self._save_adapter_read2)
@@ -42,20 +42,20 @@ class ResourceSettingsWidget(QGroupBox):
         self._data_manager.set_adapter_read_2(self._adapter_read2_lineedit.text())
 
     def _save_override_cycles_pattern_r1(self):
-        self._data_manager.set_oc_read1(self._override_cycles_pattern_r1_lineedit.text())
+        self._data_manager.set_override_cycles_read_1(self._override_cycles_pattern_r1_lineedit.text())
 
     def _save_override_cycles_pattern_i1(self):
-        self._data_manager.set_oc_index1(self._override_cycles_pattern_i1_lineedit.text())
+        self._data_manager.set_override_cycles_index_1(self._override_cycles_pattern_i1_lineedit.text())
 
     def _save_override_cycles_pattern_i2(self):
-        self._data_manager.set_oc_index2(self._override_cycles_pattern_i2_lineedit.text())
+        self._data_manager.set_override_cycles_index_2(self._override_cycles_pattern_i2_lineedit.text())
 
     def _save_override_cycles_pattern_r2(self):
-        self._data_manager.set_oc_read2(self._override_cycles_pattern_r2_lineedit.text())
+        self._data_manager.set_override_cycles_read_2(self._override_cycles_pattern_r2_lineedit.text())
 
     def _setup(self):
         form_layout = QFormLayout(self)
-        self._kit_type_name_combobox.addItems(self._data_manager.kit_names)
+        self._config_type_name_combobox.addItems(self._data_manager.config_type_names)
 
         override_header_layout = QHBoxLayout()
         for label in ["read1", "index1", "index2", "read2"]:
@@ -69,7 +69,7 @@ class ResourceSettingsWidget(QGroupBox):
 
         form_layout.addRow("adapter read1", self._adapter_read1_lineedit)
         form_layout.addRow("adapter read2", self._adapter_read2_lineedit)
-        form_layout.addRow("kit type", self._kit_type_name_combobox)
+        form_layout.addRow("config name", self._config_type_name_combobox)
         form_layout.addRow("", override_header_layout)
         form_layout.addRow("override cycles pattern", override_lineedit_layout)
 
@@ -78,11 +78,21 @@ class ResourceSettingsWidget(QGroupBox):
 
         self._adapter_read1_lineedit.textChanged.connect(self.on_adapter_read1_lineedit_change)
         self._adapter_read2_lineedit.textChanged.connect(self.on_adapter_read2_lineedit_change)
+
+        self._override_cycles_pattern_i1_lineedit.setText(self._data_manager.override_cycles_index_1)
+        self._override_cycles_pattern_i2_lineedit.setText(self._data_manager.override_cycles_index_2)
+        self._override_cycles_pattern_r1_lineedit.setText(self._data_manager.override_cycles_read_1)
+        self._override_cycles_pattern_r2_lineedit.setText(self._data_manager.override_cycles_read_2)
+
+
+
         self._override_cycles_pattern_i1_lineedit.textChanged.connect(self.on_override_cycles_pattern_i1_lineedit_change)
         self._override_cycles_pattern_i2_lineedit.textChanged.connect(self.on_override_cycles_pattern_i2_lineedit_change)
         self._override_cycles_pattern_r1_lineedit.textChanged.connect(self.on_override_cycles_pattern_r1_lineedit_change)
         self._override_cycles_pattern_r2_lineedit.textChanged.connect(self.on_override_cycles_pattern_r2_lineedit_change)
-        self._kit_type_name_combobox.currentTextChanged.connect(self._on_selected_kit_type_name_change)
+
+        self._config_type_name_combobox.currentTextChanged.connect(self._on_selected_kit_type_name_change)
+
 
 
     def set_validators(self):
@@ -112,7 +122,7 @@ class ResourceSettingsWidget(QGroupBox):
         self._override_cycles_pattern_r2_lineedit.setText(value)
 
     def _save_selected_kit_type_name(self):
-        self._data_manager.set_selected_kit_type_name(self._kit_type_name_combobox.currentText())
+        self._data_manager.set_selected_kit_type_name(self._config_type_name_combobox.currentText())
 
     def on_adapter_read1_lineedit_change(self):
         value = self._adapter_read1_lineedit.text()
@@ -124,22 +134,22 @@ class ResourceSettingsWidget(QGroupBox):
 
     def on_override_cycles_pattern_i1_lineedit_change(self):
         value = self._override_cycles_pattern_i1_lineedit.text()
-        self._data_manager.set_oc_index1(value)
+        self._data_manager.set_override_cycles_index_1(value)
 
     def on_override_cycles_pattern_i2_lineedit_change(self):
         value = self._override_cycles_pattern_i2_lineedit.text()
-        self._data_manager.set_oc_index2(value)
+        self._data_manager.set_override_cycles_index_2(value)
 
     def on_override_cycles_pattern_r1_lineedit_change(self):
         value = self._override_cycles_pattern_r1_lineedit.text()
-        self._data_manager.set_oc_read1(value)
+        self._data_manager.set_override_cycles_read_1(value)
 
     def on_override_cycles_pattern_r2_lineedit_change(self):
         value = self._override_cycles_pattern_r2_lineedit.text()
-        self._data_manager.set_oc_read2(value)
+        self._data_manager.set_override_cycles_read_2(value)
 
     def _on_selected_kit_type_name_change(self):
-        self._data_manager.set_selected_kit_type_name(self._kit_type_name_combobox.currentText())
+        self._data_manager.set_selected_kit_type_name(self._config_type_name_combobox.currentText())
 
 
 class BaseValidator(QValidator):
