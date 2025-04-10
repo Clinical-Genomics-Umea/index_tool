@@ -16,20 +16,32 @@ class IndexKitSettingsWidget(QGroupBox):
         self._data_manager = data_manager
         self._logger = logger
 
-        self._name = self._create_name_input()
+        self._index_kit_name = self._create_name_input()
         self._display_name = QLineEdit()
         self._version = self._create_version_input()
         self._description = QLineEdit()
 
         self._setup_ui()
 
-        self._name.textChanged.connect(self._save_name)
+        self._index_kit_name.textChanged.connect(self._save_index_kit_name)
         self._display_name.textChanged.connect(self._save_display_name)
         self._version.textChanged.connect(self._save_version)
         self._description.textChanged.connect(self._save_description)
 
-    def _save_name(self):
-        self._data_manager.set_kit_name(self._name.text())
+    def set_index_kit_name(self):
+        self._index_kit_name.setText(self._data_manager.index_kit_name)
+
+    def set_display_name(self):
+        self._display_name.setText(self._data_manager.display_name)
+
+    def set_version(self):
+        self._version.setText(str(self._data_manager.version))
+
+    def set_description(self):
+        self._description.setText(self._data_manager.description)
+
+    def _save_index_kit_name(self):
+        self._data_manager.set_index_kit_name(self._index_kit_name.text())
 
     def _save_display_name(self):
         self._data_manager.set_display_name(self._display_name.text())
@@ -43,7 +55,7 @@ class IndexKitSettingsWidget(QGroupBox):
     def _setup_ui(self):
 
         layout = QFormLayout()
-        layout.addRow("name", self._name)
+        layout.addRow("name", self._index_kit_name)
         layout.addRow("display name", self._display_name)
         layout.addRow("version", self._version)
         layout.addRow("description", self._description)

@@ -33,9 +33,16 @@
             </widget>
            </item>
            <item>
+            <widget class="QRadioButton" name="xlsx_radioButton">
+             <property name="text">
+              <string>xlsx</string>
+             </property>
+            </widget>
+           </item>
+           <item>
             <widget class="QRadioButton" name="ilmn_radioButton">
              <property name="text">
-              <string>tsv (Illumina index file)</string>
+              <string>tsv (Illumina)</string>
              </property>
             </widget>
            </item>

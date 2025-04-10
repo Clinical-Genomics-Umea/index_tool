@@ -1,15 +1,10 @@
 import csv
-# import json
 from logging import Logger
 from pathlib import Path
-# from typing import Dict, Any
 
-# import pandas as pd
 from PySide6.QtWidgets import QWidget, QFileDialog, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy, QLabel
 
 from modules.model.data_manager import DataManager
-# from modules.model.load.illumina_index_parser import IlluminaIndexKitParser
-# from modules.view.data_container_widget.data_container_widget import DataContainerWidget
 from modules.view.draggable_labels.draggable_labels import DraggableLabelsContainer
 from modules.view.index_table.droppable_table import DroppableTableWidget
 from modules.view.metadata.index_kit_settings.index_kit_settings_widget import IndexKitSettingsWidget
@@ -33,6 +28,12 @@ class CentralWidget(QWidget, Ui_Form):
 
         self.setupUi(self)
 
+        self._name_filters = {
+            "tsv_ilmn": "Illumina Index file (*.tsv)",
+            "csv": "Index CSV (*.csv)",
+            "xlsx": "Excel XLSX (*.xlsx)"
+        }
+
         self._logger = logger
 
         self._data_manager = data_manager
@@ -44,7 +45,6 @@ class CentralWidget(QWidget, Ui_Form):
 
         self.stackedWidget.setCurrentWidget(self.data_page_widget)
 
-        self.csv_radioButton.setChecked(True)
         self.help_pushButton.setCheckable(True)
 
         self.setAcceptDrops(True)
@@ -65,9 +65,23 @@ class CentralWidget(QWidget, Ui_Form):
         self._connect_signals()
     # #
     def _connect_signals(self):
+
+        self.xlsx_radioButton.clicked.connect(self._set_source_format)
+        self.csv_radioButton.clicked.connect(self._set_source_format)
+        self.ilmn_radioButton.clicked.connect(self._set_source_format)
+
         self.load_pushButton.clicked.connect(self._load_data)
         self.export_pushButton.clicked.connect(self._export_data)
         self.help_pushButton.clicked.connect(self._toggle_help)
+
+    def _set_source_format(self):
+        if self.xlsx_radioButton.isChecked():
+            self._data_manager.set_input_format('xlsx')
+        elif self.csv_radioButton.isChecked():
+            self._data_manager.set_input_format('csv')
+        elif self.ilmn_radioButton.isChecked():
+            self._data_manager.set_input_format('tsv_ilmn')
+
 
     #     index_header = self.index_table_container.tablewidget.horizontalHeader()
     #     self.restore_pushButton.clicked.connect(index_header.restore_orig_header)
@@ -101,16 +115,27 @@ class CentralWidget(QWidget, Ui_Form):
     def _load_data(self):
         file = self._open_file_dialog()
         if file:
-            self._data_manager.set_index_df_from_path(file)
+            self._data_manager.set_index_data(file)
 
             # self._data_container_widget.user_settings.set_source_filepath(file)
             # self._load_csv(file) if self.csv_radioButton.isChecked() else self._load_ikd(file)
 
     def _open_file_dialog(self) -> Path | None:
+
+        source_format = self._data_manager.index_source_format
+
+        if not source_format:
+            return None
+
+        name_filter = self._name_filters[source_format]
+
+        if not name_filter:
+            return None
+
+
         file_dialog = QFileDialog(self)
         file_dialog.setFileMode(QFileDialog.ExistingFiles)
-        file_dialog.setNameFilter(
-            "Illumina Index file (*.tsv)" if self.ilmn_radioButton.isChecked() else "Index CSV (*.csv)")
+        file_dialog.setNameFilter(name_filter)
 
         if file_dialog.exec():
             return Path(file_dialog.selectedFiles()[0])

@@ -1,42 +1,38 @@
 ---
-- config_type_name: 'single'
-  well: False
-  index_strategy: 'single'
-  index_sets:
-    IndexI7: [ 'index_i7_name', 'index_i7' ]
-  override_cycles_read_1: Y{r}
-  override_cycles_read_2: Y{r}
-  override_cycles_index_1: I{i}
-  override_cycles_index_2: I{i}
+- ConfigTypeName: 'single'
+  Well: False
+  IndexStrategy: 'single'
+  IndexSets:
+    IndexI7: [ 'IndexI7Name', 'IndexI7' ]
 
-- config_type_name: 'single_well'
-  well: True
-  index_strategy: 'single'
-  index_sets:
-    IndexI7: [ 'well_i7', 'index_i7_name', 'index_i7' ]
+- ConfigTypeName: 'single_well'
+  Well: True
+  IndexStrategy: 'single'
+  IndexSets:
+    IndexI7: [ 'WellI7', 'IndexI7Name', 'IndexI7' ]
 
-- config_type_name: 'cdi'
-  well: False
-  index_strategy: 'cdi'
-  index_sets:
-    IndexI7: [ 'index_i7_name', 'index_i7' ]
-    IndexI5: [ 'index_i5_name', 'index_i5' ]
+- ConfigTypeName: 'cdi'
+  Well: False
+  IndexStrategy: 'cdi'
+  IndexSets:
+    IndexI7: [ 'IndexI7Name', 'IndexI7' ]
+    IndexI5: [ 'IndexI5Name', 'IndexI5' ]
 
-- config_type_name: 'cdi_well'
-  well: True
-  index_strategy: 'cdi'
-  index_sets:
-    IndexI7: [ 'well_i7', 'index_i7_name', 'index_i7' ]
-    IndexI5: [ 'well_i5', 'index_i5_name', 'index_i5' ]
+- ConfigTypeName: 'cdi_well'
+  Well: True
+  IndexStrategy: 'cdi'
+  IndexSets:
+    IndexI7: [ 'WellI7', 'IndexI7Name', 'IndexI7' ]
+    IndexI5: [ 'WellI5', 'IndexI5Name', 'IndexI5' ]
 
-- config_type_name: 'udi'
-  well: False
-  index_strategy: 'udi'
-  index_sets:
-    IndexDual: [ 'index_i7_name', 'index_i7', 'index_i5_name', 'index_i5' ]
+- ConfigTypeName: 'udi'
+  Well: False
+  IndexStrategy: 'udi'
+  IndexSets:
+    IndexDual: [ 'IndexI7Name', 'IndexI7', 'IndexI5Name', 'IndexI5' ]
 
-- config_type_name: 'udi_well'
-  well: True
-  index_strategy: 'udi'
-  index_sets:
-    IndexDual: [ 'well_dual', 'index_i7_name', 'index_i7', 'index_i5_name', 'index_i5' ]
+- ConfigTypeName: 'udi_well'
+  Well: True
+  IndexStrategy: 'udi'
+  IndexSets:
+    IndexDual: [ 'WellDual', 'IndexI7Name', 'IndexI7', 'IndexI5Name', 'IndexI5' ]

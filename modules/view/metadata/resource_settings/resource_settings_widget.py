@@ -26,7 +26,7 @@ class ResourceSettingsWidget(QGroupBox):
         self.setFixedWidth(500)
         self._setup()
 
-        self._config_type_name_combobox.currentTextChanged.connect(self._save_selected_kit_type_name)
+        self._config_type_name_combobox.currentTextChanged.connect(self._save_kit_config_name)
 
         self._adapter_read1_lineedit.textChanged.connect(self._save_adapter_read1)
         self._adapter_read2_lineedit.textChanged.connect(self._save_adapter_read2)
@@ -73,7 +73,7 @@ class ResourceSettingsWidget(QGroupBox):
         form_layout.addRow("", override_header_layout)
         form_layout.addRow("override cycles pattern", override_lineedit_layout)
 
-        self._save_selected_kit_type_name()
+        self._save_kit_config_name()
         self.set_validators()
 
         self._adapter_read1_lineedit.textChanged.connect(self.on_adapter_read1_lineedit_change)
@@ -83,8 +83,6 @@ class ResourceSettingsWidget(QGroupBox):
         self._override_cycles_pattern_i2_lineedit.setText(self._data_manager.override_cycles_index_2)
         self._override_cycles_pattern_r1_lineedit.setText(self._data_manager.override_cycles_read_1)
         self._override_cycles_pattern_r2_lineedit.setText(self._data_manager.override_cycles_read_2)
-
-
 
         self._override_cycles_pattern_i1_lineedit.textChanged.connect(self.on_override_cycles_pattern_i1_lineedit_change)
         self._override_cycles_pattern_i2_lineedit.textChanged.connect(self.on_override_cycles_pattern_i2_lineedit_change)
@@ -103,26 +101,26 @@ class ResourceSettingsWidget(QGroupBox):
         self._override_cycles_pattern_r1_lineedit.setValidator(ReadValidator())
         self._override_cycles_pattern_r2_lineedit.setValidator(ReadValidator())
 
-    def set_adapter_read1_lineedit(self, value):
-        self._adapter_read1_lineedit.setText(value)
+    def set_adapter_read_1(self):
+        self._adapter_read1_lineedit.setText(self._data_manager.adapter_read_1)
 
-    def set_adapter_read2_lineedit(self, value):
-        self._adapter_read2_lineedit.setText(value)
+    def set_adapter_read_2(self):
+        self._adapter_read2_lineedit.setText(self._data_manager.adapter_read_2)
 
-    def set_override_cycles_pattern_i1_lineedit(self, value):
-        self._override_cycles_pattern_i1_lineedit.setText(value)
+    def set_override_cycles_pattern_i1(self):
+        self._override_cycles_pattern_i1_lineedit.setText(self._data_manager.override_cycles_index_1)
 
-    def set_override_cycles_pattern_i2_lineedit(self, value):
-        self._override_cycles_pattern_i2_lineedit.setText(value)
+    def set_override_cycles_pattern_i2(self):
+        self._override_cycles_pattern_i2_lineedit.setText(self._data_manager.override_cycles_index_2)
 
-    def set_override_cycles_pattern_r1_lineedit(self, value):
-        self._override_cycles_pattern_r1_lineedit.setText(value)
+    def set_override_cycles_pattern_r1(self):
+        self._override_cycles_pattern_r1_lineedit.setText(self._data_manager.override_cycles_read_1)
 
-    def set_override_cycles_pattern_r2_lineedit(self, value):
-        self._override_cycles_pattern_r2_lineedit.setText(value)
+    def set_override_cycles_pattern_r2(self):
+        self._override_cycles_pattern_r2_lineedit.setText(self._data_manager.override_cycles_read_2)
 
-    def _save_selected_kit_type_name(self):
-        self._data_manager.set_selected_kit_type_name(self._config_type_name_combobox.currentText())
+    def _save_kit_config_name(self):
+        self._data_manager.set_kit_config_name(self._config_type_name_combobox.currentText())
 
     def on_adapter_read1_lineedit_change(self):
         value = self._adapter_read1_lineedit.text()
@@ -149,7 +147,7 @@ class ResourceSettingsWidget(QGroupBox):
         self._data_manager.set_override_cycles_read_2(value)
 
     def _on_selected_kit_type_name_change(self):
-        self._data_manager.set_selected_kit_type_name(self._config_type_name_combobox.currentText())
+        self._data_manager.set_kit_config_name(self._config_type_name_combobox.currentText())
 
 
 class BaseValidator(QValidator):

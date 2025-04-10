@@ -41,6 +41,11 @@ class Ui_Form(object):
 
         self.verticalLayout_5.addWidget(self.csv_radioButton)
 
+        self.xlsx_radioButton = QRadioButton(self.groupBox)
+        self.xlsx_radioButton.setObjectName(u"xlsx_radioButton")
+
+        self.verticalLayout_5.addWidget(self.xlsx_radioButton)
+
         self.ilmn_radioButton = QRadioButton(self.groupBox)
         self.ilmn_radioButton.setObjectName(u"ilmn_radioButton")
 
@@ -126,7 +131,8 @@ class Ui_Form(object):
         Form.setWindowTitle(QCoreApplication.translate("Form", u"Form", None))
         self.groupBox.setTitle(QCoreApplication.translate("Form", u"Data source", None))
         self.csv_radioButton.setText(QCoreApplication.translate("Form", u"csv", None))
-        self.ilmn_radioButton.setText(QCoreApplication.translate("Form", u"tsv (Illumina index file)", None))
+        self.xlsx_radioButton.setText(QCoreApplication.translate("Form", u"xlsx", None))
+        self.ilmn_radioButton.setText(QCoreApplication.translate("Form", u"tsv (Illumina)", None))
         self.load_pushButton.setText(QCoreApplication.translate("Form", u"Load source", None))
         self.export_pushButton.setText(QCoreApplication.translate("Form", u"Export json", None))
         self.unhide_pushButton.setText(QCoreApplication.translate("Form", u"Unhide cols", None))

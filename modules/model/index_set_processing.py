@@ -2,7 +2,6 @@ import re
 
 import numpy as np
 import pandas as pd
-from pandas import DataFrame
 
 dna_regex = re.compile(r'^[ATCG]+$', re.IGNORECASE)
 
