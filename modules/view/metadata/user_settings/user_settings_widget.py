@@ -18,24 +18,17 @@ class UserSettingsWidget(QGroupBox):
         self._user_lineedit = QLineEdit()
         self._ad_user_lineedit = QLineEdit()
         self._ad_user_lineedit.setReadOnly(True)
-        self._source_filepath_lineedit = QLineEdit()
-        self._source_filepath_lineedit.setReadOnly(True)
 
         self._setup_ui()
 
         self._user_lineedit.textChanged.connect(self._save_user)
         self._ad_user_lineedit.textChanged.connect(self._save_ad_user)
-        self._source_filepath_lineedit.textChanged.connect(self._save_source_filepath)
-
 
     def _save_user(self):
         self._data_manager.set_user(self._user_lineedit.text())
 
     def _save_ad_user(self):
         self._data_manager.set_ad_user(self._ad_user_lineedit.text())
-
-    def _save_source_filepath(self):
-        self._data_manager.set_source_filepath(self._source_filepath_lineedit.text())
 
     def _setup_ui(self):
 
@@ -44,34 +37,23 @@ class UserSettingsWidget(QGroupBox):
 
         form_1 = QFormLayout()
         form_2 = QFormLayout()
-        form_3 = QFormLayout()
 
         form_1.addRow("user", self._user_lineedit)
         form_2.addRow("ad user", self._ad_user_lineedit)
-        form_3.addRow("source file path", self._source_filepath_lineedit)
 
 
         layout_h.addLayout(form_1)
         layout_h.addLayout(form_2)
 
         layout_v.addLayout(layout_h)
-        layout_v.addLayout(form_3)
 
         self.setLayout(layout_v)
-
-    def set_source_filepath(self):
-        filepath = self._data_manager.source_filepath
-        self._source_filepath_lineedit.setText(str(filepath))
 
     def set_user(self, user: str):
         self._user_lineedit.setText(user)
 
     def set_ad_user(self):
         self._ad_user_lineedit.setText(self._data_manager.ad_user)
-
-    @property
-    def source_filepath(self):
-        return Path(self._source_filepath_lineedit.text())
 
     @property
     def user(self):

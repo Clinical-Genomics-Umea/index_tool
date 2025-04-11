@@ -97,7 +97,7 @@ class IlluminaIndexData:
 
     def _set_ilmn_umi_compatible(self):
         if "UMICompatible" in self._resources["Name"].values:
-            umi_compat = bool(self._resources.loc[self._resources["Name"] == "UMICompatible", "Value"].values[0])
+            umi_compat = self._resources.loc[self._resources["Name"] == "UMICompatible", "Value"].values[0]
             self._ilmn_umi_compatible = umi_compat
 
     @property

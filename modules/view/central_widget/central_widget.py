@@ -21,6 +21,7 @@ class CentralWidget(QWidget, Ui_Form):
                  droppable_table_widget: DroppableTableWidget,
                  user_settings_widget: UserSettingsWidget,
                  index_kit_settings_widget: IndexKitSettingsWidget,
+                 index_metadata,
                  logger: Logger,
                  ) -> None:
 
@@ -42,6 +43,8 @@ class CentralWidget(QWidget, Ui_Form):
         self._droppable_table_widget = droppable_table_widget
         self._user_settings_widget = user_settings_widget
         self._index_kit_settings_widget = index_kit_settings_widget
+        self._index_metadata = index_metadata
+
 
         self.stackedWidget.setCurrentWidget(self.data_page_widget)
 
@@ -58,6 +61,7 @@ class CentralWidget(QWidget, Ui_Form):
         self._v_layout.setContentsMargins(0, 0, 0, 0)
 
         self._v_layout.addWidget(self._user_settings_widget)
+        self._v_layout.addWidget(self._index_metadata)
         self._v_layout.addLayout(self._h_layout)
         self._v_layout.addWidget(self._draggable_labels_container_widget)
         self._v_layout.addWidget(self._droppable_table_widget)
@@ -148,7 +152,7 @@ class CentralWidget(QWidget, Ui_Form):
             self._data_manager.save_json_data(filepath)
 
     def _export_file_dialog(self) -> str:
-        source_file = Path(self._data_manager.source_filepath)
+        source_file = Path(self._data_manager.import_filepath)
         proposed_filename = source_file.with_suffix(".json").name
         filepath, _ = QFileDialog().getSaveFileName(
             caption="Save Index JSON File",

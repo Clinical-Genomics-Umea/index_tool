@@ -22,7 +22,7 @@ class DataManager(QObject):
 
     user_changed = Signal()
     ad_user_changed = Signal()
-    source_filepath_changed = Signal()
+    import_filepath_changed = Signal()
 
     # Kit settings
     index_kit_name_changed = Signal()
@@ -72,7 +72,6 @@ class DataManager(QObject):
         self._index_df = pd.DataFrame()
         self._user = None
         self._ad_user = None
-        self._source_filepath = None
 
         # Kit settings
         self._index_kit_name = None
@@ -99,6 +98,7 @@ class DataManager(QObject):
         self._index_i5_len = 0
 
         # Loaded Indexes Metadata
+        self._import_filepath = None
         self._import_filetype = None
         self._ilmn_seq_strategy = None
         self._ilmn_fixed_layout = None
@@ -107,6 +107,10 @@ class DataManager(QObject):
         self._ilmn_umi_compatible = None
 
         self._init_settings_configs()
+
+    @property
+    def import_filepath(self):
+        return self._import_filepath
 
     @property
     def import_filetype(self):
@@ -288,18 +292,18 @@ class DataManager(QObject):
         if self._index_source_format == "csv":
             csv_data_obj = CsvIndexData(path, self._logger)
             self.set_index_df(csv_data_obj.indexes)
-            self.set_source_filepath(str(path))
+            self.set_import_filepath(str(path))
 
         elif self._index_source_format == "xlsx":
             xlsx_data_obj = XlsxIndexData(path, self._logger)
             self.set_index_df(xlsx_data_obj.indexes)
-            self.set_source_filepath(str(path))
+            self.set_import_filepath(str(path))
 
         elif self._index_source_format == "tsv_ilmn":
             tsv_data_obj = IlluminaIndexData(path, self._logger)
 
             self.set_index_df(tsv_data_obj.fixed_dual_indexes)
-            self.set_source_filepath(str(path))
+            self.set_import_filepath(str(path))
 
             if tsv_data_obj.checksum:
                 self.set_checksum(tsv_data_obj.checksum)
@@ -322,13 +326,24 @@ class DataManager(QObject):
             if tsv_data_obj.adapter_read_2:
                 self.set_adapter_read_2(tsv_data_obj.adapter_read_2)
 
+            if tsv_data_obj.import_filetype:
+                self.set_import_filetype(tsv_data_obj.import_filetype)
 
-            #
-            # else:
-            #     self._logger.error(f"Unknown index source format: {self._index_source_format}")
+            if tsv_data_obj.ilmn_seq_strategy:
+                self.set_ilmn_seq_strategy(tsv_data_obj.ilmn_seq_strategy)
 
-        # except Exception as e:
-        #     self._logger.warning(e)
+            if tsv_data_obj.ilmn_fixed_layout:
+                self.set_ilmn_fixed_layout(tsv_data_obj.ilmn_fixed_layout)
+
+            if tsv_data_obj.index_i7_count:
+                self.set_index_i7_count(tsv_data_obj.index_i7_count)
+
+            if tsv_data_obj.index_i5_count:
+                self.set_index_i5_count(tsv_data_obj.index_i5_count)
+
+            if tsv_data_obj.ilmn_umi_compatible:
+                self.set_ilmn_umi_compatible(tsv_data_obj.ilmn_umi_compatible)
+
 
     def set_kit_config_name(self, name):
         self._selected_config = name
@@ -349,10 +364,6 @@ class DataManager(QObject):
     def selected_index_set_fields(self):
         conf_obj = self.selected_config_obj
         return conf_obj.index_sets
-
-    @property
-    def index_kit_name(self):
-        return self._index_kit_name
 
     @property
     def uuid(self):
@@ -380,12 +391,12 @@ class DataManager(QObject):
         self._user = user
         self.user_changed.emit()
 
-    def set_source_filepath(self, path: str):
-        if self._source_filepath == path:
+    def set_import_filepath(self, path: str):
+        if self._import_filepath == path:
             return
 
-        self._source_filepath = path
-        self.source_filepath_changed.emit()
+        self._import_filepath = path
+        self.import_filepath_changed.emit()
 
     def set_ad_user(self, ad_user: str):
         if self._ad_user == ad_user:
@@ -485,10 +496,6 @@ class DataManager(QObject):
     @property
     def ad_user(self):
         return self._ad_user
-
-    @property
-    def source_filepath(self):
-        return self._source_filepath
 
     @property
     def kit_name(self):
