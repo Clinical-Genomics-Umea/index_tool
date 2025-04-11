@@ -11,27 +11,27 @@
   IndexSets:
     IndexI7: [ 'WellI7', 'IndexI7Name', 'IndexI7' ]
 
-- ConfigTypeName: 'cdi'
+- ConfigTypeName: 'combinatorial_dual_indexes'
   Well: False
   IndexStrategy: 'cdi'
   IndexSets:
     IndexI7: [ 'IndexI7Name', 'IndexI7' ]
     IndexI5: [ 'IndexI5Name', 'IndexI5' ]
 
-- ConfigTypeName: 'cdi_well'
+- ConfigTypeName: 'combinatorial_dual_indexes_well'
   Well: True
   IndexStrategy: 'cdi'
   IndexSets:
     IndexI7: [ 'WellI7', 'IndexI7Name', 'IndexI7' ]
     IndexI5: [ 'WellI5', 'IndexI5Name', 'IndexI5' ]
 
-- ConfigTypeName: 'udi'
+- ConfigTypeName: 'unique_dual_indexes'
   Well: False
   IndexStrategy: 'udi'
   IndexSets:
     IndexDual: [ 'IndexI7Name', 'IndexI7', 'IndexI5Name', 'IndexI5' ]
 
-- ConfigTypeName: 'udi_well'
+- ConfigTypeName: 'unique_dual_indexes_well'
   Well: True
   IndexStrategy: 'udi'
   IndexSets:

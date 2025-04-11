@@ -34,7 +34,7 @@ class DataManager(QObject):
     # Resources
     adapter_read_1_changed = Signal()
     adapter_read_2_changed = Signal()
-    kit_config_name_changed = Signal()
+    config_name_changed = Signal()
     set_override_cycles_read_1_changed = Signal()
     override_cycles_read_2_changed = Signal()
     override_cycles_index_1_changed = Signal()
@@ -83,7 +83,7 @@ class DataManager(QObject):
         # Resources
         self._adapter_read_1 = None
         self._adapter_read_2 = None
-        self._config_type_name = None
+        self._config_name = None
         self._override_cycles_read_1 = "Y{r}"
         self._override_cycles_read_2 = "Y{r}"
         self._override_cycles_index_1 = "I{i}"
@@ -92,7 +92,7 @@ class DataManager(QObject):
         self._override_cycles_pattern = None
 
         self._selected_config = None
-        self._config_list = None
+        self._config_name_list = None
 
         self._index_i7_len = 0
         self._index_i5_len = 0
@@ -107,6 +107,23 @@ class DataManager(QObject):
         self._ilmn_umi_compatible = None
 
         self._init_settings_configs()
+
+
+    def _clear_data(self):
+        self.set_uuid("")
+        self.set_description("")
+        self.set_ilmn_umi_compatible("")
+        self.set_ilmn_seq_strategy("")
+        self.set_ilmn_fixed_layout("")
+        self.set_index_kit_name("")
+        self.set_display_name("")
+        self.set_import_filetype("")
+        self.set_import_filepath("")
+        self.set_index_i5_count(0)
+        self.set_index_i7_count(0)
+        self.set_adapter_read_1("")
+        self.set_adapter_read_2("")
+        self.set_version("")
 
     @property
     def import_filepath(self):
@@ -288,7 +305,7 @@ class DataManager(QObject):
         filepath_obj.write_text(json.dumps(data, indent=4))
 
     def set_index_data(self, path: Path):
-        # try:
+        self._clear_data()
         if self._index_source_format == "csv":
             csv_data_obj = CsvIndexData(path, self._logger)
             self.set_index_df(csv_data_obj.indexes)
@@ -344,11 +361,6 @@ class DataManager(QObject):
             if tsv_data_obj.ilmn_umi_compatible:
                 self.set_ilmn_umi_compatible(tsv_data_obj.ilmn_umi_compatible)
 
-
-    def set_kit_config_name(self, name):
-        self._selected_config = name
-        self.kit_config_name_changed.emit()
-
     def set_uuid(self, uuid):
         self._uuid = uuid
 
@@ -369,20 +381,14 @@ class DataManager(QObject):
     def uuid(self):
         return self._uuid or "None"
 
-    @property
-    def selected_kit_type_name(self):
-        return self._selected_config
-
-    @property
-    def config_type_names(self) -> list:
-        return list(self._config_definition_data.keys())
-
     def set_index_df(self, df: pd.DataFrame):
         if self._index_df.equals(df):
             return
 
         self._index_df = df
         self.index_df_changed.emit()
+        self._set_i7_index_count_after_label_drop()
+        self._set_i5_index_count_after_label_drop()
 
     def set_user(self, user: str):
         if self._user == user:
@@ -447,15 +453,16 @@ class DataManager(QObject):
         self._adapter_read_2 = adapter_read_2
         self.adapter_read_2_changed.emit()
 
-    def set_config_type_name(self, config_type_name):
-        if self._config_type_name == config_type_name:
+    def set_config_name(self, config_name):
+        if self._config_name == config_name:
             return
 
-        self._config_type_name = config_type_name
-        self.kit_config_name_changed.emit()
+        self._config_name = config_name
+        self.config_name_changed.emit()
 
-    def set_config_type_name_list(self, config_type_name_list):
-        self._config_list = config_type_name_list
+    @property
+    def config_name_list(self):
+        return list(self._config_definition_data.keys())
 
     def set_override_cycles_read_1(self, oc_read1):
         if self._override_cycles_read_1 == oc_read1:
@@ -522,8 +529,8 @@ class DataManager(QObject):
         return self._adapter_read_2
 
     @property
-    def kit_type(self):
-        return self._config_type_name
+    def config_name(self):
+        return self._config_name
 
     @property
     def override_cycles_read_1(self):
@@ -572,5 +579,23 @@ class DataManager(QObject):
         self.set_ad_user(ad_user)
 
         print(f"Loaded {len(res)} kits")
+
+    def _set_i7_index_count_after_label_drop(self):
+        if "IndexI7" in self._index_df.columns:
+            index_i7_series = self._index_df["IndexI7"]
+
+            cleaned_s = index_i7_series[index_i7_series.str.strip().ne('')]
+            i7_count = len(cleaned_s)
+            self.set_index_i7_count(i7_count)
+
+    def _set_i5_index_count_after_label_drop(self):
+        if "IndexI5" in self._index_df.columns:
+            index_i5_series = self._index_df["IndexI5"]
+
+            cleaned_s = index_i5_series[index_i5_series.str.strip().ne('')]
+            i5_count = len(cleaned_s)
+            self.set_index_i5_count(i5_count)
+
+
 
 

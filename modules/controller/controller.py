@@ -54,7 +54,7 @@ class MainController(QObject):
         self._user_settings_widget.set_ad_user()
 
     def _set_connections(self):
-        self._data_manager.kit_config_name_changed.connect(self._draggable_labels_container_widget.show_labels)
+        self._data_manager.config_name_changed.connect(self._draggable_labels_container_widget.show_labels)
         self._data_manager.index_df_changed.connect(self._droppable_table_widget.set_index_table_widget_data)
 
         self._data_manager.index_kit_name_changed.connect(self._index_kit_settings_widget.set_index_kit_name)
