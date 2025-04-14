@@ -6,9 +6,9 @@ from modules.model.data_manager import DataManager
 from modules.view.central_widget.central_widget import CentralWidget
 from modules.view.draggable_labels.draggable_labels import DraggableLabelsContainer
 from modules.view.index_table.droppable_table import DroppableTableWidget
-from modules.view.logging.log_toast_handler import LogToastHandler
+from modules.view.logging.statusbar_handler import StatusBarLogHandler
 from modules.view.main_window import MainWindow
-from modules.view.logging.message_toast import MessageToast
+from modules.view.logging.statusbar import StatusBar
 from modules.view.metadata.index_metadata.index_metadata import IndexMetadata
 from modules.view.metadata.resource_settings.resource_settings_widget import ResourceSettingsWidget
 from modules.view.metadata.index_kit_settings.index_kit_settings_widget import IndexKitSettingsWidget
@@ -34,6 +34,10 @@ class MainController(QObject):
         self._index_kit_settings_widget = IndexKitSettingsWidget(self._data_manager, self._logger)
         self._droppable_table_widget = DroppableTableWidget(0, 0, self._data_manager)
 
+        self._statusbar = StatusBar()
+        self._statusbar_handler = StatusBarLogHandler(self._statusbar)
+        self._logger.addHandler(self._statusbar_handler)
+
         self._central_widget = CentralWidget(self._data_manager,
                                              self._draggable_labels_container_widget,
                                              self._resources_settings_widget,
@@ -43,9 +47,8 @@ class MainController(QObject):
                                              self._index_metadata,
                                              self._logger)
 
-        self._message_toast = MessageToast()
-        self._log_toast_handler = LogToastHandler(self._message_toast)
-        self.main_window = MainWindow(self._central_widget, self._message_toast)
+
+        self.main_window = MainWindow(self._central_widget, self._statusbar)
         self._init_data()
         self._set_connections()
 

@@ -60,6 +60,7 @@ class CentralWidget(QWidget, Ui_Form):
         self._v_layout = self.data_page_widget.layout()
         self._v_layout.setContentsMargins(0, 0, 0, 0)
 
+        # self._v_layout.addWidget(self._message_toast)
         self._v_layout.addWidget(self._user_settings_widget)
         self._v_layout.addWidget(self._index_metadata)
         self._v_layout.addLayout(self._h_layout)
@@ -86,31 +87,6 @@ class CentralWidget(QWidget, Ui_Form):
         elif self.ilmn_radioButton.isChecked():
             self._data_manager.set_input_format('tsv_ilmn')
 
-
-    #     index_header = self.index_table_container.tablewidget.horizontalHeader()
-    #     self.restore_pushButton.clicked.connect(index_header.restore_orig_header)
-    #     self.index_table_container.resources_settings.widgets['kit_type'].currentTextChanged.connect(
-    #         index_header.restore_orig_header)
-    #
-    #     self.export_pushButton.clicked.connect(self._export)
-    #     self.unhide_pushButton.clicked.connect(self.index_table_container.tablewidget.show_all_columns)
-    #     self.index_table_container.notify_signal.connect(self.show_notification)
-    #     self.csv_radioButton.toggled.connect(self._illumina_preset)
-
-    # @staticmethod
-    # def _detect_delimiter(file_path: Path) -> str:
-    #     with open(file_path, 'r') as csvfile:
-    #         content = csvfile.read()
-    #         dialect = csv.Sniffer().sniff(content)
-    #
-    #         return dialect.delimiter
-
-    # def _illumina_preset(self):
-    #     self.index_table_container.illumina_preset(self.ilmn_radioButton.isChecked())
-    #
-    # def show_notification(self, message: str, warn: bool = False):
-    #     Toast(self, message, warn=warn).show_toast()
-    #
     def _toggle_help(self):
         self.stackedWidget.setCurrentWidget(
             self.help_page_widget if self.help_pushButton.isChecked() else self.data_page_widget
@@ -125,6 +101,7 @@ class CentralWidget(QWidget, Ui_Form):
             # self._load_csv(file) if self.csv_radioButton.isChecked() else self._load_ikd(file)
 
     def _open_file_dialog(self) -> Path | None:
+        self._logger.info(f"open file dialog clicked")
 
         source_format = self._data_manager.index_source_format
 
