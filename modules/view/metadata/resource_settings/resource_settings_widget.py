@@ -1,7 +1,6 @@
-from PySide6.QtCore import QRegularExpression, Signal
+from PySide6.QtCore import QRegularExpression
 from PySide6.QtGui import QValidator
-from PySide6.QtWidgets import (QGroupBox, QFormLayout, QLineEdit, QComboBox,
-                               QHBoxLayout, QLabel, QWidget)
+from PySide6.QtWidgets import QGroupBox, QFormLayout, QLineEdit, QHBoxLayout, QLabel, QWidget
 
 from modules.model.data_manager import DataManager
 

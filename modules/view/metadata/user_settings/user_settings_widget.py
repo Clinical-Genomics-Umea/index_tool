@@ -1,5 +1,4 @@
 from logging import Logger
-from pathlib import Path
 from PySide6.QtWidgets import QGroupBox, QFormLayout, QLineEdit, QHBoxLayout, QVBoxLayout
 
 from modules.model.data_manager import DataManager

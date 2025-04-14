@@ -1,5 +1,5 @@
-from PySide6.QtWidgets import QMainWindow, QStatusBar
-from PySide6.QtCore import QTimer
+from PySide6.QtWidgets import QMainWindow
+
 
 from modules.view.central_widget.central_widget import CentralWidget
 import qtawesome as qta

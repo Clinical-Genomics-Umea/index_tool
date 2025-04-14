@@ -1,8 +1,7 @@
-import csv
 from logging import Logger
 from pathlib import Path
 
-from PySide6.QtWidgets import QWidget, QFileDialog, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy, QLabel
+from PySide6.QtWidgets import QWidget, QFileDialog, QHBoxLayout, QSpacerItem, QSizePolicy
 
 from modules.model.data_manager import DataManager
 from modules.view.draggable_labels.draggable_labels import DraggableLabelsContainer

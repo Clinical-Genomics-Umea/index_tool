@@ -2,8 +2,8 @@ from logging import Logger
 
 from PySide6.QtCore import QRegularExpression
 from PySide6.QtGui import QValidator
-from PySide6.QtWidgets import QLineEdit, QComboBox, QFormLayout, QGroupBox
-from typing import Dict, Union
+from PySide6.QtWidgets import QLineEdit, QFormLayout, QGroupBox
+from typing import Dict
 
 from modules.model.data_manager import DataManager
 
